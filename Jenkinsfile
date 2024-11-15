@@ -13,9 +13,9 @@ pipeline {
                     def branch = env.BRANCH_NAME
                     if (branch == "dev") {
 					 echo "Deploying to dev environment"
-					// sh '/home/ubuntu/scripts/fastapiforumiasdevserver/sshapidev.sh'
-					// sh 'sudo scp -i /home/ubuntu/keys/academyforumiasdevserver/devapiacadamy.pem -r /var/lib/jenkins/workspace/fastapi_academy_forumias_com_dev/academy/* ubuntu@52.1.147.59:/home/ubuntu/public_html/fastapidevacademy.forumias.com'
-          // sh '/home/ubuntu/scripts/fastapidevacademy.forumias.com/apidev_sshtorestartsupervisor.sh'
+					 sh '/home/ubuntu/scripts/fastapiforumiasdevserver/sshapidev.sh'
+					 sh 'sudo scp -i /home/ubuntu/keys/academyforumiasdevserver/devapiacadamy.pem -r /var/lib/jenkins/workspace/fastapi_academy_forumias_com_dev/academy/* ubuntu@52.1.147.59:/home/ubuntu/public_html/fastapidevacademy.forumias.com'
+           sh '/home/ubuntu/scripts/fastapidevacademy.forumias.com/apidev_sshtorestartsupervisor.sh'
 					} else if (branch == "staging") {
                      echo "Deploying to staging environment, Lol we don't have staging branch for this job so no deployement"		  
                      } else if (branch == "prod") {
