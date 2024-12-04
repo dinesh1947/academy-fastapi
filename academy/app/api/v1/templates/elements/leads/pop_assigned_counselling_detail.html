@@ -1,0 +1,69 @@
+<style>
+    #next_followup_date {
+        border: none;
+        box-sizing: border-box;
+        outline: 0;
+        padding: .75rem;
+        position: relative;
+        width: 100%;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        background: transparent;
+        bottom: 0;
+        color: transparent;
+        cursor: pointer;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: auto;
+    }
+    </style>
+    <div class="container">
+    
+    <div class="row">
+      <div class="col-md-12">
+       <div class="rounded p-3">
+        
+    <div class="details_box">
+    <div class="text-center text-danger mb-4">Counselling assigned to: <b>{% if counselling.agent_id%} agent name {% else %} N/A {% endif %}</b></div>
+    <ul>
+      <li><b>Student Name:</b> {{counselling.fullName}}</li>
+      <li><b>Email Address:</b> {{counselling.email}}</li>
+      <li><b>Mobile Number:</b> {{counselling.phone}}</li>
+      <li><b>Reason:</b> {{counselling.reason}}</li>
+      <li><b>Scheduled At:</b> {{counselling.schedule_date}}@{{counselling.schedule_time}}</li>
+      <li><b>Submitted At:</b> {{counselling.submitDate}}</li>
+    </ul>
+    
+    <form id="submitDetailForm" method="post" class="mb-4">
+        <input type="hidden" class="counselling_id" name="counselling_id" value="{{counselling.id}}">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Comment for completion</h6>
+                
+                <textarea class="form-select" placeholder="Enter your comment" required></textarea>
+            </div><!--close column-->
+            
+            <div class="col-md-6">
+                
+            </div><!--close column-->
+            
+        </div><!--close row-->
+
+        <button type="submit" class="btn btn-primary mt-2 ml-4 assign_btn">Submit</button>
+        <button type="button" class="btn btn-danger mt-2 ml-4 cancel_counselling">Cancel Counselling</button>
+        <div id="status"></div>
+    </form>
+    
+    
+    </div><!--close details_box-->
+    
+       </div>
+      </div><!--close column-->
+    </div><!--close row-->
+    
+    
+    </div><!--close container-->
