@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine
+# database.py
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from databases import Database
@@ -11,18 +12,18 @@ PASSWORD = quote("YLBW7m-Z*!!!")  # Escaping special characters
 HOST = "52.1.147.59"
 PORT = 3306
 
-# Database URLs
+# Database URLs for synchronous and asynchronous connections
 SYNC_DATABASE_URL = f"mysql+mysqlconnector://{DB_USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
 ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
 
-# Synchronous setup
-sync_engine = create_engine(SYNC_DATABASE_URL)
+# Synchronous setup using SQLAlchemy
+sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)  # echo=True to log SQL queries
 SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
-# Asynchronous setup
+# Asynchronous setup using the 'databases' library
 async_database = Database(ASYNC_DATABASE_URL)
 
-# Base class for models
+# Base class for models (if you're using ORM models)
 Base = declarative_base()
 
 # Dependency for synchronous database session
