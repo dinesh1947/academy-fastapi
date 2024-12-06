@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from academy.app.config.database import get_sync_db, async_database
 import asyncio
 
+
+from academy.app.api.v1.endpoints import user_courses
+
 app = FastAPI()
+app.include_router(user_courses.router, prefix="/api/v1/test_users", tags=["TestUsers"])
 
 @app.get("/")
 def read_root():
