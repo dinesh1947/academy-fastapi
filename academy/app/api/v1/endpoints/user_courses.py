@@ -2,6 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
+
+
+
 from academy.app.api.v1.models.UserCourseModel import TestUser  # SQLAlchemy model
 from academy.app.api.v1.schemas.UserCourseSchema import (
     TestUserCreate,
@@ -12,14 +15,40 @@ from academy.app.config.database import get_sync_db  # Dependency for DB session
 
 router = APIRouter()
 
-# Fetch all TestUsers
-@router.get("/", response_model=List[TestUserRead])
+
+
+
+@router.get("/",response_model=List[TestUserRead])
 def get_test_users(db: Session = Depends(get_sync_db)):
-    """
-    Fetch all TestUser records.
-    """
-    test_users = db.query(TestUser).all()
-    return test_users
+    try:
+        # Fetch test users from the database
+        # test_users = db.query(TestUser).all()
+        test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
+        return test_users
+    except Exception as e:
+        # Handle exceptions (e.g., database errors)
+        print(f"Error fetching test users: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching test users")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Fetch a single TestUser by ID
 @router.get("/{test_user_id}", response_model=TestUserRead)

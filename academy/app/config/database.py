@@ -4,6 +4,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from databases import Database
 from urllib.parse import quote
+from sqlalchemy.exc import SQLAlchemyError
+from contextlib import contextmanager
 
 # Database configuration
 DB_NAME = "dev_academy_db"
@@ -12,28 +14,34 @@ PASSWORD = quote("YLBW7m-Z*!!!")  # Escaping special characters
 HOST = "52.1.147.59"
 PORT = 3306
 
-# Database URLs for synchronous and asynchronous connections
-SYNC_DATABASE_URL = f"mysql+mysqlconnector://{DB_USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
-ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
 
-# Synchronous setup using SQLAlchemy
-sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)  # echo=True to log SQL queries
+# ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
+# async_database = Database(ASYNC_DATABASE_URL)
+
+
+
+
+SYNC_DATABASE_URL = "mysql+mysqlconnector://academyforumdevdbuser:YLBW7m-Z*!!!@52.1.147.59:3306/dev_academy_db"
+sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)
 SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
-# Asynchronous setup using the 'databases' library
-async_database = Database(ASYNC_DATABASE_URL)
 
-# Base class for models (if you're using ORM models)
-Base = declarative_base()
 
-# Dependency for synchronous database session
+
+
+
 def get_sync_db():
-    """
-    Dependency that provides a synchronous database session.
-    It ensures proper cleanup after use.
-    """
+    print("********************************************")
+   
     db = SyncSessionLocal()
     try:
+        # Test the database connection by performing a simple query
+        db.execute(text("SELECT 1"))  # Wrap the SQL query in `text()`
+        print("Database connection successful")
         yield db
+    except SQLAlchemyError as e:
+        print(f"Database connection failed>>>>>>>>>>>>>>>>: {e}")
+        raise Exception("Database connection failed") from e
     finally:
         db.close()
+
