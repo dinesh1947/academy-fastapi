@@ -8,6 +8,8 @@ from academy.app.config.database import get_async_db
 from sqlalchemy.future import select
 import hashlib
 
+from academy.app.api.v1.utils.project_jwt import *
+
 
 
 
@@ -56,7 +58,7 @@ async def login(user: UserModel, db: Session = Depends(get_sync_db)):
     
     # Generate the JWT token
     print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.mobile})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
