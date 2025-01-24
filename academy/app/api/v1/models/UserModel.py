@@ -30,10 +30,9 @@ class User(Base):
     source = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
     is_staff = Column(Boolean, default=False)
-    
-    
- 
+    role = Column(Enum(Role), default=Role.student)
 
+    # status = Column(Enum(Status), default=Status.active)
 
 
 

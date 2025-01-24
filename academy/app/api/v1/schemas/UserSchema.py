@@ -6,11 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from pydantic import BaseModel
 
-# Secret key and algorithm for JWT
-SECRET_KEY = "your-secret-key"  # Replace with a more secure secret key
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Token expiration time in minutes
-
+#
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
