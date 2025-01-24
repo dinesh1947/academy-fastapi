@@ -41,19 +41,29 @@ def get_test_users(db: Session = Depends(get_sync_db)):
 
 
 
-@router.get("/async", response_model=List[TestUserRead])
-async def get_test_users(db: AsyncSession = Depends(get_async_db)):
-    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-    
-    try:
-        query = select(TestUser).order_by(TestUser.id).limit(10)
-        result = await db.execute(query)
-        test_users = result.scalars().all()
-        return test_users
-    except Exception as e:
-        
-        raise HTTPException(status_code=500, detail="Error fetching test users")
 
+@router.get("/async", response_model=List[TestUserRead])
+async def get_first_and_last_test_users(db: AsyncSession = Depends(get_async_db)):
+    try:
+        # Asynchronously query both the first and last 10 records in parallel
+        first_query = select(TestUser).order_by(TestUser.id).limit(10)
+        last_query = select(TestUser).order_by(TestUser.id.desc()).limit(10)
+        
+        first_result, last_result = await asyncio.gather(
+            db.execute(first_query),
+            db.execute(last_query)
+        )
+        
+        first_test_users = first_result.scalars().all()
+        last_test_users = list(reversed(last_result.scalars().all()))  # Reverse the last 10 records
+
+        # Combine the results
+        combined_users = first_test_users + last_test_users
+        return combined_users
+
+    except Exception as e:
+        print(f"Error fetching test users: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching test users")
 
 
 
