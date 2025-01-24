@@ -3,16 +3,12 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from academy.app.config.database import get_sync_db
 import asyncio
+from academy.app.api.v1 import router as v1_router
 
-
-from academy.app.api.v1.endpoints import user_courses
 
 app = FastAPI()
-app.include_router(user_courses.router, prefix="/api/v1/test_users", tags=["TestUsers"])
 
-@app.get("/")
-def read_root():
-    return {"Hello": "This Code Is Deployed To Server Using Jenkins Pipeline"}
+app.include_router(v1_router , prefix="/api/v1")
 
 # @app.get("/check-connections")
 # async def check_connections(sync_db: Session = Depends(get_sync_db)):

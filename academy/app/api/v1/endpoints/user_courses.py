@@ -10,7 +10,7 @@ from academy.app.api.v1.schemas.UserCourseSchema import (
     TestUserCreate,
     TestUserUpdate,
     TestUserRead,
-)  # Pydantic schemas for TestUser
+)  
 from academy.app.config.database import get_sync_db  # Dependency for DB session
 
 router = APIRouter()
@@ -20,6 +20,7 @@ router = APIRouter()
 
 @router.get("/",response_model=List[TestUserRead])
 def get_test_users(db: Session = Depends(get_sync_db)):
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     try:
         # Fetch test users from the database
         # test_users = db.query(TestUser).all()
@@ -29,16 +30,6 @@ def get_test_users(db: Session = Depends(get_sync_db)):
         # Handle exceptions (e.g., database errors)
         print(f"Error fetching test users: {e}")
         raise HTTPException(status_code=500, detail="Error fetching test users")
-
-
-
-
-
-
-
-
-
-
 
 
 
