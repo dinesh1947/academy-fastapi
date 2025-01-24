@@ -47,7 +47,7 @@ from academy.app.api.v1.models.UserModel import *
 @router.get("/", response_model=List[TestUserRead])
 def get_test_users(
     db: Session = Depends(get_sync_db), 
-    current_user: User = Depends(get_current_user_sync)  # This ensures the user is authenticated synchronously
+    current_user: User = Depends(get_current_user_sync)  
 ):
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     try:
