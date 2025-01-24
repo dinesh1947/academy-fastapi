@@ -1,3 +1,24 @@
+import logging
+
+# Set logging level to CRITICAL to suppress unnecessary logs
+logging.basicConfig(level=logging.CRITICAL)
+logging.getLogger('sqlalchemy').setLevel(logging.CRITICAL)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +28,7 @@ from academy.app.config.database import get_sync_db
 from academy.app.config.database import get_async_db  
 from sqlalchemy.future import select
 from academy.app.api.v1.utils.project_jwt import *
+
 
 
 
@@ -41,7 +63,6 @@ router = APIRouter()
 
 
 
-from academy.app.api.v1.models.UserModel import *
 
 
 @router.get("/", response_model=List[TestUserRead])
@@ -64,10 +85,10 @@ def get_test_users(
 
 
 
-
-
 @router.get("/async", response_model=List[TestUserRead])
-async def get_first_and_last_test_users(db: AsyncSession = Depends(get_async_db)):
+async def get_first_and_last_test_users(db: AsyncSession = Depends(get_async_db),
+    current_user: User = Depends(get_current_user_async)):
+    print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZzz")
     try:
         # Asynchronously query both the first and last 10 records in parallel
         first_query = select(TestUser).order_by(TestUser.id).limit(10)
@@ -79,7 +100,7 @@ async def get_first_and_last_test_users(db: AsyncSession = Depends(get_async_db)
         )
         
         first_test_users = first_result.scalars().all()
-        last_test_users = list(reversed(last_result.scalars().all()))  # Reverse the last 10 records
+        last_test_users = list(reversed(last_result.scalars().all()))  
 
         # Combine the results
         combined_users = first_test_users + last_test_users
@@ -88,6 +109,9 @@ async def get_first_and_last_test_users(db: AsyncSession = Depends(get_async_db)
     except Exception as e:
         print(f"Error fetching test users: {e}")
         raise HTTPException(status_code=500, detail="Error fetching test users")
+
+
+
 
 
 
