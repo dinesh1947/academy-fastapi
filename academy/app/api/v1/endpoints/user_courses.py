@@ -6,6 +6,7 @@ import asyncio
 from academy.app.config.database import get_sync_db 
 from academy.app.config.database import get_async_db  
 from sqlalchemy.future import select
+from academy.app.api.v1.utils.project_jwt import *
 
 
 
@@ -23,18 +24,41 @@ router = APIRouter()
 
 
 
-@router.get("/",response_model=List[TestUserRead])
-def get_test_users(db: Session = Depends(get_sync_db)):
+# @router.get("/",response_model=List[TestUserRead])
+# def get_test_users(db: Session = Depends(get_sync_db)):
+#     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+#     try:
+#         # Fetch test users from the database
+#         # test_users = db.query(TestUser).all()
+#         test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
+#         return test_users
+#     except Exception as e:
+#         # Handle exceptions (e.g., database errors)
+#         print(f"Error fetching test users: {e}")
+#         raise HTTPException(status_code=500, detail="Error fetching test users")
+
+
+
+
+
+from academy.app.api.v1.models.UserModel import *
+
+
+@router.get("/", response_model=List[TestUserRead])
+def get_test_users(
+    db: Session = Depends(get_sync_db), 
+    current_user: User = Depends(get_current_user_sync)  # This ensures the user is authenticated synchronously
+):
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     try:
-        # Fetch test users from the database
-        # test_users = db.query(TestUser).all()
+        # Fetch test users from the database synchronously
         test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
         return test_users
     except Exception as e:
         # Handle exceptions (e.g., database errors)
         print(f"Error fetching test users: {e}")
         raise HTTPException(status_code=500, detail="Error fetching test users")
+
 
 
 
