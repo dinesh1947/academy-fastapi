@@ -1,21 +1,3 @@
-import logging
-
-# Set logging level to CRITICAL to suppress unnecessary logs
-logging.basicConfig(level=logging.CRITICAL)
-logging.getLogger('sqlalchemy').setLevel(logging.CRITICAL)
-logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
