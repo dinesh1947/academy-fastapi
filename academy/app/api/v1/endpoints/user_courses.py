@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+import asyncio
+from academy.app.config.database import get_sync_db 
+from academy.app.config.database import get_async_db  
+from sqlalchemy.future import select
 
 
 
@@ -11,7 +16,7 @@ from academy.app.api.v1.schemas.UserCourseSchema import (
     TestUserUpdate,
     TestUserRead,
 )  
-from academy.app.config.database import get_sync_db  # Dependency for DB session
+
 
 router = APIRouter()
 
@@ -35,6 +40,19 @@ def get_test_users(db: Session = Depends(get_sync_db)):
 
 
 
+
+@router.get("/async", response_model=List[TestUserRead])
+async def get_test_users(db: AsyncSession = Depends(get_async_db)):
+    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+    
+    try:
+        query = select(TestUser).order_by(TestUser.id).limit(10)
+        result = await db.execute(query)
+        test_users = result.scalars().all()
+        return test_users
+    except Exception as e:
+        
+        raise HTTPException(status_code=500, detail="Error fetching test users")
 
 
 

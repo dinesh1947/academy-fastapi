@@ -6,6 +6,7 @@ from databases import Database
 from urllib.parse import quote
 from sqlalchemy.exc import SQLAlchemyError
 from contextlib import contextmanager
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 # Database configuration
 DB_NAME = "dev_academy_db"
@@ -45,3 +46,33 @@ def get_sync_db():
     finally:
         db.close()
 
+
+
+
+
+ASYNC_DATABASE_URL = "mysql+asyncmy://academyforumdevdbuser:YLBW7m-Z*!!!@52.1.147.59:3306/dev_academy_db"
+
+# Create an async engine
+async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=True)
+
+# Async sessionmaker
+AsyncSessionLocal = sessionmaker(
+    bind=async_engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+)
+
+
+
+async def get_async_db():
+    print("********************************************>>>>>>>>>>>>>>>>>>>>")
+    async with AsyncSessionLocal() as db:
+        try:
+            # Test the database connection by performing a simple query
+            await db.execute(text("SELECT 1"))  # Use `await` for async execution
+            print("Database connection successfulJJJJJJJJJJJJJJ")
+            yield db
+        except SQLAlchemyError as e:
+            print(f"Database connection failed>>>>>>>>>>>>>>>>: {e}")
+            raise Exception("Database connection failed") from e

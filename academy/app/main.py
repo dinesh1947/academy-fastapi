@@ -10,6 +10,8 @@ app = FastAPI()
 
 app.include_router(v1_router , prefix="/api/v1")
 
+
+
 # @app.get("/check-connections")
 # async def check_connections(sync_db: Session = Depends(get_sync_db)):
 #     """
@@ -37,6 +39,9 @@ app.include_router(v1_router , prefix="/api/v1")
 #         "sync_connection": sync_status,
 #         "async_connection": async_status
 #     }
+
+
+
 
 # # Optionally, you can add a route to perform database testing explicitly for debugging purposes.
 # # @app.get("/test-connections")
