@@ -1,3 +1,85 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+import asyncio
+from academy.app.config.database import get_sync_db 
+from academy.app.config.database import get_async_db  
+from sqlalchemy.future import select
+import hashlib
+
+
+
+
+
+
+from academy.app.api.v1.models.UserModel import *
+from academy.app.api.v1.schemas.UserSchema import *
+
+
+router = APIRouter()
+
+
+
+
+
+
+
+from passlib.context import CryptContext
+
+# Create a CryptContext instance for bcrypt
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+
+
+@router.post("/login", response_model=Token)
+async def login(user: UserModel, db: Session = Depends(get_sync_db)):
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    
+    # Fetch the user from DB using plain mobile number
+    db_user = db.query(User).filter(User.mobile == user.mobile).first()
+    print("##############################################")
+    print("db_user", db_user)
+    
+    # Hash the password from the request and compare it with the hashed password in DB
+    hashed_password = hashlib.md5(user.password.encode()).hexdigest()
+    
+    if not db_user or hashed_password != db_user.password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Generate the JWT token
+    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 # from sqlalchemy.orm import Session
 # from typing import Optional, List

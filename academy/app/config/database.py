@@ -66,12 +66,12 @@ AsyncSessionLocal = sessionmaker(
 
 
 async def get_async_db():
-    print("********************************************>>>>>>>>>>>>>>>>>>>>")
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     async with AsyncSessionLocal() as db:
         try:
             # Test the database connection by performing a simple query
             await db.execute(text("SELECT 1"))  # Use `await` for async execution
-            print("Database connection successfulJJJJJJJJJJJJJJ")
+            print("Database connection successful async")
             yield db
         except SQLAlchemyError as e:
             print(f"Database connection failed>>>>>>>>>>>>>>>>: {e}")
