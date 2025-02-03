@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jose import jwt, JWTError
+from jose import jwt, JWTError,ExpiredSignatureError
 from datetime import datetime, timedelta
 from typing import List
 
@@ -68,21 +68,46 @@ async def get_user_by_id_async(db: AsyncSession, user_id: int):
     result = await db.execute(select(User).where(User.id == user_id))
     return result.scalars().first()
 
-# Async function to verify the token
+
+
+
+
+
+
+
+
 async def verify_token_async(db: AsyncSession, token: str):
+    print("Verifying token...")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("id")
         if user_id is None:
-            raise HTTPException(status_code=401, detail="User ID not found in token")
+            raise jwt.InvalidTokenError("User ID not found in token")
+
         user = await get_user_by_id_async(db, user_id)  # Async database query
         if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise jwt.InvalidTokenError("User not found")
+
         return user
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    except ExpiredSignatureError as e:
+        raise e  # Let the global handler catch it
+
+    except JWTError as e:
+        raise e  # Let the global handler catch it
+
+
+
+
 
 # Async dependency to get the current user
 async def get_current_user_async(db: AsyncSession = Depends(get_async_db), token: str = Depends(oauth2_scheme)):
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>KKKKKKKKKKKKKKKKKKKKKKKK")
     return await verify_token_async(db, token)
+
+
+
+
+
+
+

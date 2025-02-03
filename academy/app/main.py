@@ -1,14 +1,27 @@
 # main.py
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+import traceback
 from sqlalchemy.orm import Session
 from academy.app.config.database import get_sync_db
 import asyncio
 from academy.app.api.v1 import router as v1_router
 
+from academy.app.exception_handlers import jwt_expired_handler, jwt_invalid_token_handler, global_exception_handler,not_authenticated_handler
+import jwt
+
+
 
 app = FastAPI()
 
 app.include_router(v1_router , prefix="/api/v1")
+
+
+app.add_exception_handler(jwt.ExpiredSignatureError, jwt_expired_handler)
+app.add_exception_handler(jwt.InvalidTokenError, jwt_invalid_token_handler)
+app.add_exception_handler(HTTPException, not_authenticated_handler)  # Handle Not Authenticated
+app.add_exception_handler(Exception, global_exception_handler)
+
 
 
 
