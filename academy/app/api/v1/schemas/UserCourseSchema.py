@@ -4,6 +4,8 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
+from typing import List
+
 
 
 
@@ -74,4 +76,14 @@ class TestUserRead(BaseModel):
     test_type: str
 
     class Config:
-        orm_mode = True  # This tells Pydantic to work with ORM models
+        orm_mode = True  
+        from_attributes=True
+
+
+
+class PaginatedResponse(BaseModel):
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+    results: List[TestUserRead]

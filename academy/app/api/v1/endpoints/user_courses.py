@@ -1,7 +1,7 @@
 
 
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -11,7 +11,7 @@ from academy.app.config.database import get_async_db
 from sqlalchemy.future import select
 from academy.app.api.v1.utils.project_jwt import *
 
-
+from academy.app.api.v1.utils.pagination import Paginator  # Import the Paginator class
 
 
 
@@ -20,6 +20,7 @@ from academy.app.api.v1.schemas.UserCourseSchema import (
     TestUserCreate,
     TestUserUpdate,
     TestUserRead,
+    PaginatedResponse
 )  
 
 
@@ -48,11 +49,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[TestUserRead])
-def get_test_users(
-    db: Session = Depends(get_sync_db), 
-    current_user: User = Depends(get_current_user_sync)  
-):
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+def get_test_users(db: Session = Depends(get_sync_db), current_user: User = Depends(get_current_user_sync) ):
     try:
         # Fetch test users from the database synchronously
         test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
@@ -61,6 +58,41 @@ def get_test_users(
         # Handle exceptions (e.g., database errors)
         print(f"Error fetching test users: {e}")
         raise HTTPException(status_code=500, detail="Error fetching test users")
+
+
+
+
+
+
+
+
+
+
+@router.get("/list/", response_model=PaginatedResponse)
+def get_test_users(
+    db: Session = Depends(get_sync_db),
+    current_user: User = Depends(get_current_user_sync),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    try:
+        paginator = Paginator(db=db, model=TestUser, pydantic_model=TestUserRead,page=page, page_size=page_size)
+        response = paginator.get_paginated_response()
+
+        print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWw")
+        
+        print("Paginated Response:", response)  # Check the structure of the response
+        return response
+
+    except HTTPException as e:
+        print(f"Authentication failed: {e.detail}")
+        raise e  # Re-raise the authentication error
+
+    except Exception as e:
+        print(f"Error fetching test users: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching test users")
+
+
 
 
 
