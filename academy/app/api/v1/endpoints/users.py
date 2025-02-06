@@ -3,20 +3,34 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import asyncio
-from academy.app.config.database import get_sync_db 
-from academy.app.config.database import get_async_db  
+
 from sqlalchemy.future import select
 import hashlib
 
-from academy.app.api.v1.utils.project_jwt import *
+
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+print(current_dir)
+print("######################################################^")
+sys.path.insert(0, current_dir)
+
+
+
+
+
+from config.database import get_sync_db 
+from config.database import get_async_db  
+from api.v1.utils.project_jwt import *
 
 
 
 
 
 
-from academy.app.api.v1.models.UserModel import *
-from academy.app.api.v1.schemas.UserSchema import *
+from api.v1.models.UserModel import *
+from api.v1.schemas.UserSchema import *
 
 
 router = APIRouter()

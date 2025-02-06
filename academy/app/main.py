@@ -1,13 +1,18 @@
 # main.py
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 import traceback
 from sqlalchemy.orm import Session
-from academy.app.config.database import get_sync_db
+from .config.database import get_sync_db
 import asyncio
-from academy.app.api.v1 import router as v1_router
+from .api.v1 import router as v1_router
 
-from academy.app.exception_handlers import jwt_expired_handler, jwt_invalid_token_handler, global_exception_handler,not_authenticated_handler
+from .exception_handlers import jwt_expired_handler, jwt_invalid_token_handler, global_exception_handler,not_authenticated_handler
 import jwt
 
 
