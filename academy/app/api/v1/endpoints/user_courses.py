@@ -68,7 +68,7 @@ def get_test_users(db: Session = Depends(get_sync_db), current_user: User = Depe
 
 
 
-@router.get("/list/", response_model=PaginatedResponse)
+@router.get("/list", response_model=PaginatedResponse)
 def get_test_users(
     db: Session = Depends(get_sync_db),
     current_user: User = Depends(get_current_user_sync),
@@ -76,7 +76,8 @@ def get_test_users(
     page_size: int = Query(10, ge=1, le=100)
 ):
     try:
-        paginator = Paginator(db=db, model=TestUser, pydantic_model=TestUserRead,page=page, page_size=page_size)
+        base_url="http://127.0.0.1:8000/api/v1/user-course/list"
+        paginator = Paginator(db=db, model=TestUser, pydantic_model=TestUserRead,base_url=base_url,page=page, page_size=page_size)
         response = paginator.get_paginated_response()        
         # print("Paginated Response:", response)  # Check the structure of the response
         return response

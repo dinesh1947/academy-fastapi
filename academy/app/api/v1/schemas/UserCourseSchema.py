@@ -86,4 +86,8 @@ class PaginatedResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    first: Optional[str] = None
+    last: Optional[str] = None
+    next: Optional[str] = None
+    previous: Optional[str] = None
     results: List[TestUserRead]
