@@ -102,7 +102,6 @@ async def verify_token_async(db: AsyncSession, token: str):
 
 # Async dependency to get the current user
 async def get_current_user_async(db: AsyncSession = Depends(get_async_db), token: str = Depends(oauth2_scheme)):
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>KKKKKKKKKKKKKKKKKKKKKKKK")
     return await verify_token_async(db, token)
 
 

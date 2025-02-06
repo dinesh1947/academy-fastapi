@@ -21,18 +21,8 @@ class Paginator(Generic[T]):
         return self.db.query(func.count(self.model.id)).scalar()
 
     def get_page(self) -> List[T]:
-        print("fffffffffffffffffffffffffffffffffff")
         offset = (self.page - 1) * self.page_size
-        print("fffffffffffffffffffffffffffffffffff>>>>>>>>>>>>")
-        print("self.model", self.model)
-        print("offset", offset)
-        print("page_size", self.page_size)
-
         results = self.db.query(self.model).offset(offset).limit(self.page_size).all()
-
-        print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUU")
-        print("self.pydantic_model",self.pydantic_model)
-
         # Convert SQLAlchemy models to Pydantic models
         return [self.pydantic_model.from_orm(result) for result in results]
 
@@ -60,10 +50,8 @@ class Paginator(Generic[T]):
 
     def get_paginated_response(self) -> dict:
         total_count = self.get_total_count()
-        print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdddd")
         results = self.get_page()
-        print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDddddtttttttttttttttttt")
-        print(f"Results fetched: {results}")  # Check what is returned
+        # print(f"Results fetched: {results}")  # Check what is returned
         return {
             "total_count": total_count,
             "page": self.page,

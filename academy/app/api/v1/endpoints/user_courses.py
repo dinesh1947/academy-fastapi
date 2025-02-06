@@ -77,11 +77,8 @@ def get_test_users(
 ):
     try:
         paginator = Paginator(db=db, model=TestUser, pydantic_model=TestUserRead,page=page, page_size=page_size)
-        response = paginator.get_paginated_response()
-
-        print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWw")
-        
-        print("Paginated Response:", response)  # Check the structure of the response
+        response = paginator.get_paginated_response()        
+        # print("Paginated Response:", response)  # Check the structure of the response
         return response
 
     except HTTPException as e:
