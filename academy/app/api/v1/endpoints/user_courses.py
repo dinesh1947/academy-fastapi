@@ -51,6 +51,23 @@ router = APIRouter()
 @router.get("/", response_model=List[TestUserRead])
 def get_test_users(db: Session = Depends(get_sync_db), current_user: User = Depends(get_current_user_sync) ):
     try:
+        print("**********************>>>>>>>>>")
+        # Fetch test users from the database synchronously
+        test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
+        return test_users
+    except Exception as e:
+        # Handle exceptions (e.g., database errors)
+        print(f"Error fetching test users: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching test users")
+
+
+
+
+
+@router.get("/all-test/", response_model=List[TestUserRead])
+def get_all_test(db: Session = Depends(get_sync_db), current_user: User = Depends(get_current_user_sync) ):
+    try:
+        print("**********************>>>>>>>>>")
         # Fetch test users from the database synchronously
         test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
         return test_users
@@ -185,3 +202,8 @@ def delete_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
     db.delete(test_user)
     db.commit()
     return {"message": "TestUser deleted successfully"}
+
+
+
+
+
