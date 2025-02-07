@@ -29,3 +29,25 @@ class TestUser(Base):
     restart_number = Column(Integer, default=0)
     language = Column(String, default="")
     test_type = Column(String, default="pts")
+
+
+
+
+
+
+class UserCoursePackage(Base):
+    __tablename__ = "user_courses_usercoursepackage"
+    id = Column(Integer, primary_key=True, index=True)
+    user = Column(Integer)
+    test_series = Column(Integer)
+    course = Column(Integer)
+    package = Column(Integer)
+    added_by =Column(String, default="Online")
+    source = Column(String,  default="admin panel")
+    rating = Column(Integer, default=0)
+    review_title = Column(String,  default="")
+    review = Column(String,  default="")
+    mts = Column(Integer)
+    
+
+ 
