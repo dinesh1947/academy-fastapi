@@ -15,12 +15,13 @@ from academy.app.api.v1.utils.pagination import Paginator  # Import the Paginato
 
 
 
-from academy.app.api.v1.models.UserCourseModel import TestUser  # SQLAlchemy model
+from academy.app.api.v1.models.UserCourseModel import TestUser,UserCoursePackage  # SQLAlchemy model
 from academy.app.api.v1.schemas.UserCourseSchema import (
     TestUserCreate,
     TestUserUpdate,
     TestUserRead,
-    PaginatedResponse
+    PaginatedResponse,
+    UserCoursePackageResponse
 )  
 
 
@@ -64,13 +65,19 @@ def get_test_users(db: Session = Depends(get_sync_db), current_user: User = Depe
 
 
 
-@router.get("/all-test/", response_model=List[TestUserRead])
+@router.get("/all-test/", response_model=List[UserCoursePackageResponse])
 def get_all_test(db: Session = Depends(get_sync_db), current_user: User = Depends(get_current_user_sync) ):
     try:
         print("**********************>>>>>>>>>")
+        print(current_user)
+        print(type(current_user))
+        print(current_user.id)
+        print("###################################################################")
         # Fetch test users from the database synchronously
-        test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
-        return test_users
+        # ucp = db.query(UserCoursePackage).order_by(UserCoursePackage.id).limit(10).all()
+        # ucp = db.query(UserCoursePackage).filter(UserCoursePackage.user_id == current_user.id).order_by(UserCoursePackage.id).limit(10).all()
+        ucp = db.query(UserCoursePackage).filter(UserCoursePackage.user_id == current_user.id).filter(UserCoursePackage.test_series_id.isnot(None))
+        return ucp
     except Exception as e:
         # Handle exceptions (e.g., database errors)
         print(f"Error fetching test users: {e}")

@@ -38,16 +38,16 @@ class TestUser(Base):
 class UserCoursePackage(Base):
     __tablename__ = "user_courses_usercoursepackage"
     id = Column(Integer, primary_key=True, index=True)
-    user = Column(Integer)
-    test_series = Column(Integer)
-    course = Column(Integer)
-    package = Column(Integer)
+    user_id = Column(Integer)
+    test_series_id = Column(Integer)
+    course_id = Column(Integer)
+    package_id = Column(Integer)
     added_by =Column(String, default="Online")
     source = Column(String,  default="admin panel")
     rating = Column(Integer, default=0)
     review_title = Column(String,  default="")
     review = Column(String,  default="")
-    mts = Column(Integer)
+    mts_id = Column(Integer)
     
 
  

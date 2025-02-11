@@ -25,3 +25,14 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
+
+
+class CurrentUser(BaseModel):
+    id: int
+    username: str
+    email: str
+    rollnumber: str
+
+    class Config:
+        from_attributes = True  # This enables ORM mode

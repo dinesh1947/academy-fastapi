@@ -91,3 +91,26 @@ class PaginatedResponse(BaseModel):
     next: Optional[str] = None
     previous: Optional[str] = None
     results: List[TestUserRead]
+
+
+
+
+
+
+class UserCoursePackageResponse(BaseModel):
+    id : int
+    user_id:Optional[int] = None
+    test_series_id :Optional[int] = None
+    course_id :Optional[int] = None
+    package_id :Optional[int] = None
+    added_by :Optional[str] = ""
+    source :Optional[str] = ""
+    rating :Optional[int] = 0
+    review_title :Optional[str] = ""
+    review :Optional[str] = ""
+    mts_id :Optional[int] = None
+    
+
+    class Config:
+        orm_mode = True  
+        

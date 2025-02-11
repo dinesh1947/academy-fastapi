@@ -38,11 +38,12 @@ def verify_access_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 # Database query function to fetch the user by ID
-def get_user_by_id_sync(db: Session, user_id: int):
+def get_user_by_id_sync(db: Session, user_id: int) -> CurrentUser:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    # return user
+    return CurrentUser.model_validate(user)
 
 # Function to verify the token and fetch the current user
 def verify_token_sync(db: Session, token: str):
