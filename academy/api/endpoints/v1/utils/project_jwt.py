@@ -1,11 +1,11 @@
-# from fastapi import APIRouter, Depends, HTTPException, Request
-# from fastapi.security import OAuth2PasswordBearer
-# from sqlalchemy.orm import Session
-# from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-# from jose import jwt, JWTError,ExpiredSignatureError
-# from datetime import datetime, timedelta
-# from typing import List
+from jose import jwt, JWTError,ExpiredSignatureError
+from datetime import datetime, timedelta
+from typing import List
 
 # # # Import database session and models
 # # from academy.app.config.database import get_sync_db,get_async_db
@@ -14,19 +14,21 @@
 # # from sqlalchemy.future import select
 
 
-# # Secret key and algorithm
-# SECRET_KEY = "your_secret_key"
-# ALGORITHM = "HS256"
+# Secret key and algorithm
+SECRET_KEY = "your_secret_key"
+ALGORITHM = "HS256"
 
 # # Dependency to extract the token from the request
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# # Function to create a JWT token
-# def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=100)):
-#     to_encode = data.copy()
-#     expire = datetime.utcnow() + expires_delta
-#     to_encode.update({"exp": expire})
-#     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+# Function to create a JWT token
+def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=100)):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 
 # # Function to decode and verify the JWT token
 # def verify_access_token(token: str):

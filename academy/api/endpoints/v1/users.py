@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import asyncio
 
+from .utils.project_jwt import *
 from sqlalchemy.future import select
 import hashlib
 
@@ -55,21 +56,21 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 
-# @router.post("/login", response_model=Token)
-# async def login(user: UserModel, db: Session = Depends(get_sync_db)):
-#     # Fetch the user from DB using plain mobile number
-#     db_user = db.query(User).filter(User.mobile == user.mobile).first()
-#     hashed_password = hashlib.md5(user.password.encode()).hexdigest()
-#     if not db_user or hashed_password != db_user.password:
-#         raise HTTPException(status_code=401, detail="Invalid credentials")
-#     access_token = create_access_token(data={
-#         "id": db_user.id,  
-#         "username": db_user.username,  
-#         "mobile": db_user.mobile,  
-#         "email": db_user.email,  
-#         "role": db_user.role.value
-#     })
-#     return {"access_token": access_token, "token_type": "bearer"}
+@router.post("/login", response_model=Token)
+async def login(user: UserModel, db: Session = Depends(get_sync_db)):
+    # Fetch the user from DB using plain mobile number
+    db_user = db.query(User).filter(User.mobile == user.mobile).first()
+    hashed_password = hashlib.md5(user.password.encode()).hexdigest()
+    if not db_user or hashed_password != db_user.password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    access_token = create_access_token(data={
+        "id": db_user.id,  
+        "username": db_user.username,  
+        "mobile": db_user.mobile,  
+        "email": db_user.email,  
+        "role": db_user.role.value
+    })
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 

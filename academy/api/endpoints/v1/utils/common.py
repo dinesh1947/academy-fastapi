@@ -1,8 +1,11 @@
 from sqlalchemy import and_, desc
 from datetime import datetime
-from app.api.v1.models.BookingModel import BookingTagMail, BookingTagStudent, BookingTags
-from app.api.v1.models.UserModel import User
-from app.api.v1.utils.helper import cleanCommaIntValues
+# from api.endpoints.v1.models.BookingModel import BookingTagMail, BookingTagStudent, BookingTags
+from api.models.v1.UserModel import *
+from api.models.v1.BookingModel import *
+from api.models.v1.UserModel import *
+# from .v1.models.UserModel import *
+# from app.api.v1.utils.helper import cleanCommaIntValues
 
 
 def GetStudentEmailListForTagMail(to_tags, avoid_tags, from_id, db):
