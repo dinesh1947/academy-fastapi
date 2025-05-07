@@ -6,23 +6,23 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
-# import traceback
-# from sqlalchemy.orm import Session
-# from .config.database import get_sync_db
-# import asyncio
+import traceback
+from sqlalchemy.orm import Session
+from config.database import get_async_db
+import asyncio
 
 from api.endpoints.v1 import router as v1_router
 
 
 
+import jwt
 # from .exception_handlers import jwt_expired_handler, jwt_invalid_token_handler, global_exception_handler,not_authenticated_handler
-# import jwt
 
 
 
 app = FastAPI()
 
-# app.include_router(v1_router , prefix="/api/")
+app.include_router(v1_router , prefix="/api")
 
 
 # app.add_exception_handler(jwt.ExpiredSignatureError, jwt_expired_handler)

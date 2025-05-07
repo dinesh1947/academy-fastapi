@@ -13,14 +13,14 @@ import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 print(current_dir)
-print("######################################################^")
+print("######################################################>>>>>>^")
 sys.path.insert(0, current_dir)
 
 
 
 
 
-from config.database import get_sync_db 
+# from config.database import get_sync_db 
 from config.database import get_async_db  
 from api.endpoints.v1.utils.project_jwt import *
 
@@ -29,8 +29,8 @@ from api.endpoints.v1.utils.project_jwt import *
 
 
 
-# from api.v1.models.UserModel import *
-# from api.v1.schemas.UserSchema import *
+from api.models.v1.UserModel import *
+from api.schemas.v1.UserSchema import *
 
 
 router = APIRouter()
@@ -41,16 +41,16 @@ router = APIRouter()
 
 
 
-# from passlib.context import CryptContext
+from passlib.context import CryptContext
 
-# # Create a CryptContext instance for bcrypt
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Create a CryptContext instance for bcrypt
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# def hash_password(password: str) -> str:
-#     return pwd_context.hash(password)
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
-# def verify_password(plain_password: str, hashed_password: str) -> bool:
-#     return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 
