@@ -1,7 +1,8 @@
-from app.config.database import Base
 from sqlalchemy import Column, String, Integer, DateTime, Text, func, ForeignKey, Date, Time, SmallInteger
 from sqlalchemy.orm import relationship
 from typing import Optional
+
+from config.database import Base
 
 class Counselling(Base):
     __tablename__ = 'schedules'

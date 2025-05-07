@@ -1,9 +1,9 @@
-from app.config.database import Base
+from config.database import Base
 from sqlalchemy import Column, String, Integer, DateTime, Text, func, ForeignKey
 from sqlalchemy.orm import relationship
 from typing import Optional
 
-from app.api.v1.models.UserModel import User
+from models.v1.UserModel import User
 
 
 class BookingTags(Base):

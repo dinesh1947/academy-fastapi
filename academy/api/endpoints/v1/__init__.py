@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from .import  users
-# from .import  user_courses
+from .import  user_courses
 
 router = APIRouter()
 
