@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,12 @@ SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 
 # # Dependency to extract the token from the request
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+
 
 # Function to create a JWT token
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=100)):
@@ -28,6 +33,30 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
+
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: int = payload.get("id")
+        role: str = payload.get("role")
+        if user_id is None or role is None:
+            raise credentials_exception
+        return {"id": user_id, "role": role}
+    except JWTError:
+        raise credentials_exception
+
+
+def admin_required(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return current_user
 
 
 # # Function to decode and verify the JWT token
