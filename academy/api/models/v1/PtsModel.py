@@ -26,7 +26,7 @@ from datetime import datetime
 
 
 class TestSeries(Base):
-    __tablename__ = 'test_series'
+    __tablename__ = 'pts_testseries'
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), unique=True, nullable=False)
@@ -49,6 +49,7 @@ class TestSeries(Base):
     # # Relationships (optional if you need joins in ORM)
     # goal = relationship("Goal", back_populates="test_series", lazy='joined')
     # course_type = relationship("CourseType", back_populates="test_series", lazy='joined')
+    # tests = relationship("Test", back_populates="test_series", lazy='joined')
 
 
 
@@ -58,8 +59,8 @@ class Test(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    # test_series_id = Column(Integer, ForeignKey("test_series.id"), nullable=False)
-    # duration = Column(Integer, nullable=True)  # in minutes
+    # test_series_id = Column(Integer, ForeignKey("pts_testseries.id"), nullable=False)
+    duration = Column(Integer, nullable=True)  # in minutes
     # total_marks = Column(Integer, nullable=True)
     # passing_marks = Column(Integer, nullable=True)
     # start_time = Column(DateTime, nullable=True)
@@ -76,14 +77,14 @@ class Test(Base):
 
 
 class QuestionPaper(Base):
-    __tablename__ = 'question_paper'
+    __tablename__ = 'pts_questionpaper'
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
     # test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
-    instructions = Column(Text, nullable=True)
-    total_questions = Column(Integer, nullable=True)
-    total_marks = Column(Integer, nullable=True)
+    # instructions = Column(Text, nullable=True)
+    # total_questions = Column(Integer, nullable=True)
+    # total_marks = Column(Integer, nullable=True)
 
     # # Relationship
     # test = relationship("Test", back_populates="question_papers")

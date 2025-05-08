@@ -5,7 +5,9 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from pydantic import BaseModel
-from typing import List
+from typing import Generic, TypeVar, List, Optional
+from pydantic.generics import GenericModel
+
 
 
 #
@@ -15,18 +17,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # OAuth2 password bearer for token-based authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# Pydantic Models
-class TestSchema(BaseModel):
-    id: int
-    name: str
 
+T = TypeVar('T')  # Generic type
 
-
-
-
-
-
-class PaginatedResponse(BaseModel):
+class PaginatedResponse(GenericModel, Generic[T]):
     total_count: int
     page: int
     page_size: int
@@ -35,7 +29,33 @@ class PaginatedResponse(BaseModel):
     last: Optional[str] = None
     next: Optional[str] = None
     previous: Optional[str] = None
-    results: List[TestSchema]
+    results: List[T]
+
+
+
+
+# Pydantic Models
+class TestSchema(BaseModel):
+    id: int
+    name: str
+    # test_series_id:int
+
+
+
+PaginatedTestResponse = PaginatedResponse[TestSchema]
+
+
+
+
+# Pydantic Models
+class QuestionPaperSchema(BaseModel):
+    id: int
+    name: str
+    # test_series_id:int
+
+
+
+PaginatedQuestionPaperResponse = PaginatedResponse[QuestionPaperSchema]
 
 
 
