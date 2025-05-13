@@ -11,36 +11,65 @@
 
 from fastapi import Request
 from math import ceil
-from typing import List, Type, TypeVar
+from typing import List, Type, TypeVar, Dict, Any
+from sqlalchemy.orm import DeclarativeMeta
 from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
 
+# def paginate(
+#     request: Request,
+#     items: List[T],
+#     total_count: int,
+#     page: int,
+#     page_size: int,
+#     response_model: Type[BaseModel]
+# ):
+#     total_pages = ceil(total_count / page_size)
+#     base_url = str(request.url).split('?')[0]
+
+#     def page_link(p):
+#         return f"{base_url}?page={p}&page_size={page_size}"
+
+#     return response_model(
+#         total_count=total_count,
+#         page=page,
+#         page_size=page_size,
+#         total_pages=total_pages,
+#         first=page_link(1) if page > 1 else None,
+#         last=page_link(total_pages) if page < total_pages else None,
+#         next=page_link(page + 1) if page < total_pages else None,
+#         previous=page_link(page - 1) if page > 1 else None,
+#         results=items
+#     )
+
+
+
+
 def paginate(
     request: Request,
-    items: List[T],
+    items: List[Any],
     total_count: int,
     page: int,
-    page_size: int,
-    response_model: Type[BaseModel]
-):
+    page_size: int
+) -> Dict[str, Any]:
     total_pages = ceil(total_count / page_size)
     base_url = str(request.url).split('?')[0]
 
-    def page_link(p):
+    def page_link(p: int) -> str:
         return f"{base_url}?page={p}&page_size={page_size}"
 
-    return response_model(
-        total_count=total_count,
-        page=page,
-        page_size=page_size,
-        total_pages=total_pages,
-        first=page_link(1) if page > 1 else None,
-        last=page_link(total_pages) if page < total_pages else None,
-        next=page_link(page + 1) if page < total_pages else None,
-        previous=page_link(page - 1) if page > 1 else None,
-        results=items
-    )
+    return {
+        "total_count": total_count,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "first": page_link(1) if page > 1 else None,
+        "last": page_link(total_pages) if page < total_pages else None,
+        "next": page_link(page + 1) if page < total_pages else None,
+        "previous": page_link(page - 1) if page > 1 else None,
+        "results": items
+    }
 
 
 
@@ -51,14 +80,17 @@ def paginate(
 
 
 
-def get_columns_from_pydantic_model(pydantic_model: Type[BaseModel], sqlalchemy_model):
-    pydantic_fields = set(pydantic_model.__annotations__.keys())
-    columns = [getattr(sqlalchemy_model, field) for field in pydantic_fields if hasattr(sqlalchemy_model, field)]
-    return columns
+# def get_columns_from_pydantic_model(pydantic_model: Type[BaseModel], sqlalchemy_model):
+#     pydantic_fields = set(pydantic_model.__annotations__.keys())
+#     columns = [getattr(sqlalchemy_model, field) for field in pydantic_fields if hasattr(sqlalchemy_model, field)]
+#     return columns
 
 
 
 
+def get_columns_from_pydantic_model(schema: Type[BaseModel], model: DeclarativeMeta) -> List:
+    """Select only the columns from SQLAlchemy model that match the Pydantic schema fields."""
+    return [getattr(model, field) for field in schema.__fields__.keys()]
 
 
 
