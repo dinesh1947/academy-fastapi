@@ -81,7 +81,6 @@ class QuestionPaper(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    # test_id = Column(Integer, ForeignKey("test.id"), nullable=False)
     # instructions = Column(Text, nullable=True)
     # total_questions = Column(Integer, nullable=True)
     # total_marks = Column(Integer, nullable=True)
