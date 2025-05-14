@@ -4,6 +4,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 from enum import Enum as PyEnum
 
+from .UserCourseModel import *
+
 Base = declarative_base()
 
 # Enum choices for role and status
@@ -117,6 +119,9 @@ class Question(Base):
     # # ForeignKey and Relationship to QuestionPaper
     question_paper_id = Column(Integer, ForeignKey("pts_questionpaper.id"), nullable=False)
     question_paper = relationship("QuestionPaper", back_populates="questions")
+
+
+    user_test_answers = relationship("UserTestAnswer", back_populates="question")
 
     # def __repr__(self):
     #     return f"<Question(id={self.id}, question_number={self.question_number})>"

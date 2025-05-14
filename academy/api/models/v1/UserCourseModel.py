@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float,DateT
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from sqlalchemy.orm import relationship
-
+from api.models.v1.PtsModel import Question 
 
 
 Base = declarative_base()
@@ -80,8 +80,7 @@ class UserTestAnswer(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    question_paper_id = Column(Integer, ForeignKey("question_paper.id", ondelete="SET NULL"), nullable=True)
-    question_id = Column(Integer, ForeignKey("question.id", ondelete="SET NULL"), nullable=True)
+    # question_paper_id = Column(Integer, ForeignKey("question_paper.id", ondelete="SET NULL"), nullable=True)
 
     question_number = Column(SmallInteger, nullable=True)
     answer = Column(String(20), nullable=True, default='')
@@ -92,8 +91,18 @@ class UserTestAnswer(Base):
     how_sure = Column(String(4), nullable=True)
 
 
-
-
-
     user_test_id = Column(Integer,ForeignKey("user_courses_usertest.id", ondelete="CASCADE"),nullable=False)
     user_test = relationship("UserTest", back_populates="answers")
+
+
+    # question_id = Column(Integer, ForeignKey("pts_question.id", ondelete="SET NULL"), nullable=True)
+    # question = relationship("Question", back_populates="user_test_answers")
+
+
+    question_id = Column(Integer, ForeignKey("pts_question.id", ondelete="SET NULL"), nullable=True)
+    # question = relationship(Question, back_populates="user_test_answers")
+    
+
+   
+
+    
