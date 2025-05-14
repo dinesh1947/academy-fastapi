@@ -1,54 +1,38 @@
 
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import asyncio
 from sqlalchemy.future import select
-
-
-from config.database import get_sync_db 
-
-from config.database import get_async_db  
-
+from config.database import get_sync_db, get_async_db
 from utils.project_jwt import *
+from utils.pagination import *
+from api.models.v1.UserCourseModel import *
+from api.schemas.v1.UserCourseSchema import *
 
-from utils.pagination import Paginator  # Import the Paginator class
-
-
-
-
-
-from api.models.v1.UserCourseModel import TestUser,UserCoursePackage  # SQLAlchemy model
-from api.schemas.v1.UserCourseSchema import (
-    TestUserCreate,
-    TestUserUpdate,
-    TestUserRead,
-    PaginatedResponse,
-    UserCoursePackageResponse
-)  
 
 
 router = APIRouter()
 
 
 
+@router.get("/user-test-list", response_model=PaginatedResponse[UserTestSchema])
+def get_test_users(
+    request: Request,
+    db: Session = Depends(get_sync_db),
+    page: int = 1,
+    page_size: int = 10,
+):
+    query = db.query(UserTest).order_by(UserTest.id)  # Add any filters or joins if needed
 
-# # @router.get("/",response_model=List[TestUserRead])
-# # def get_test_users(db: Session = Depends(get_sync_db)):
-# #     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-# #     try:
-# #         # Fetch test users from the database
-# #         # test_users = db.query(TestUser).all()
-# #         test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
-# #         return test_users
-# #     except Exception as e:
-# #         # Handle exceptions (e.g., database errors)
-# #         print(f"Error fetching test users: {e}")
-# #         raise HTTPException(status_code=500, detail="Error fetching test users")
-
-
+    return paginate_query(
+        request=request,
+        query=query,
+        schema=UserTestSchema,  # Pydantic schema for UserTest
+        page=page,
+        page_size=page_size
+    )
 
 
 
@@ -162,61 +146,61 @@ router = APIRouter()
 
 
 
-####### Fetch a single TestUser by ID
-@router.get("/{test_user_id}", response_model=TestUserRead)
-def get_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
-    """
-    Fetch a single TestUser by its ID.
-    """
-    test_user = db.query(TestUser).filter(TestUser.id == test_user_id).first()
-    if not test_user:
-        raise HTTPException(status_code=404, detail="TestUser not found")
-    return test_user
+# ####### Fetch a single TestUser by ID
+# @router.get("/{test_user_id}", response_model=TestUserRead)
+# def get_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
+#     """
+#     Fetch a single TestUser by its ID.
+#     """
+#     test_user = db.query(UserTest).filter(UserTest.id == test_user_id).first()
+#     if not test_user:
+#         raise HTTPException(status_code=404, detail="TestUser not found")
+#     return test_user
 
-# Create a new TestUser
-@router.post("/", response_model=TestUserRead)
-def create_test_user(test_user: TestUserCreate, db: Session = Depends(get_sync_db)):
-    """
-    Create a new TestUser record.
-    """
-    new_test_user = TestUser(**test_user.dict())
-    db.add(new_test_user)
-    db.commit()
-    db.refresh(new_test_user)
-    return new_test_user
-
-
+# # Create a new TestUser
+# @router.post("/", response_model=TestUserRead)
+# def create_test_user(test_user: TestUserCreate, db: Session = Depends(get_sync_db)):
+#     """
+#     Create a new TestUser record.
+#     """
+#     new_test_user = UserTest(**test_user.dict())
+#     db.add(new_test_user)
+#     db.commit()
+#     db.refresh(new_test_user)
+#     return new_test_user
 
 
-# Update an existing TestUser by ID
-@router.put("/{test_user_id}", response_model=TestUserRead)
-def update_test_user(
-    test_user_id: int, test_user: TestUserUpdate, db: Session = Depends(get_sync_db)
-):
-    """
-    Update an existing TestUser by its ID.
-    """
-    existing_test_user = db.query(TestUser).filter(TestUser.id == test_user_id).first()
-    if not existing_test_user:
-        raise HTTPException(status_code=404, detail="TestUser not found")
-    for key, value in test_user.dict(exclude_unset=True).items():
-        setattr(existing_test_user, key, value)
-    db.commit()
-    db.refresh(existing_test_user)
-    return existing_test_user
 
-# Delete a TestUser by ID
-@router.delete("/{test_user_id}", response_model=dict)
-def delete_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
-    """
-    Delete a TestUser by its ID.
-    """
-    test_user = db.query(TestUser).filter(TestUser.id == test_user_id).first()
-    if not test_user:
-        raise HTTPException(status_code=404, detail="TestUser not found")
-    db.delete(test_user)
-    db.commit()
-    return {"message": "TestUser deleted successfully"}
+
+# # Update an existing TestUser by ID
+# @router.put("/{test_user_id}", response_model=TestUserRead)
+# def update_test_user(
+#     test_user_id: int, test_user: TestUserUpdate, db: Session = Depends(get_sync_db)
+# ):
+#     """
+#     Update an existing TestUser by its ID.
+#     """
+#     existing_test_user = db.query(TestUser).filter(TestUser.id == test_user_id).first()
+#     if not existing_test_user:
+#         raise HTTPException(status_code=404, detail="TestUser not found")
+#     for key, value in test_user.dict(exclude_unset=True).items():
+#         setattr(existing_test_user, key, value)
+#     db.commit()
+#     db.refresh(existing_test_user)
+#     return existing_test_user
+
+# # Delete a TestUser by ID
+# @router.delete("/{test_user_id}", response_model=dict)
+# def delete_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
+#     """
+#     Delete a TestUser by its ID.
+#     """
+#     test_user = db.query(UserTest).filter(UserTest.id == test_user_id).first()
+#     if not test_user:
+#         raise HTTPException(status_code=404, detail="TestUser not found")
+#     db.delete(test_user)
+#     db.commit()
+#     return {"message": "TestUser deleted successfully"}
 
 
 
