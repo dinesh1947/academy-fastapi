@@ -1,11 +1,8 @@
 from typing import List, TypeVar, Generic, Optional
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from fastapi import HTTPException, Request
+from sqlalchemy.orm import Session,Query
 from sqlalchemy import func
 from pydantic import BaseModel
-
-
-
 
 
 
@@ -85,3 +82,38 @@ class Paginator(Generic[T]):
             previous=self.get_url(self.page - 1) if self.page > 1 else None,
             results=self.get_items()
         )
+
+
+
+
+
+
+
+
+
+def paginate_query(
+    *,
+    request: Request,
+    query: Query,
+    schema: Type[T],
+    page: int,
+    page_size: int
+) -> PaginatedResponse[T]:
+    offset = (page - 1) * page_size
+    total_count = query.order_by(None).count()  # `order_by(None)` avoids unnecessary ORDER BY in count
+
+    results = query.offset(offset).limit(page_size).all()
+    base_url = str(request.url).split('?')[0]
+    total_pages = (total_count + page_size - 1) // page_size
+
+    return PaginatedResponse[T](
+        total_count=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        first=f"{base_url}?page=1&page_size={page_size}",
+        last=f"{base_url}?page={total_pages}&page_size={page_size}",
+        next=f"{base_url}?page={page + 1}&page_size={page_size}" if page < total_pages else None,
+        previous=f"{base_url}?page={page - 1}&page_size={page_size}" if page > 1 else None,
+        results=[schema.from_orm(obj) for obj in results]
+    )

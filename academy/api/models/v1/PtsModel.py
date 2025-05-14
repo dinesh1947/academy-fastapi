@@ -85,8 +85,8 @@ class QuestionPaper(Base):
     # total_questions = Column(Integer, nullable=True)
     # total_marks = Column(Integer, nullable=True)
 
-    # # Relationship
-    # test = relationship("Test", back_populates="question_papers")
+ 
+    questions = relationship("Question", back_populates="question_paper")
 
 
 
@@ -100,12 +100,12 @@ class Question(Base):
     id = Column(Integer, primary_key=True, index=True)
     question_number = Column(Integer, nullable=True)
     question = Column(Text, nullable=True)
-    # option_a = Column(Text, nullable=True)
-    # option_b = Column(Text, nullable=True)
-    # option_c = Column(Text, nullable=True)
-    # option_d = Column(Text, nullable=True)
-    # correct_option = Column(String(25), nullable=True)  # Option A, B, C, D
-    # explanation = Column(Text, nullable=True)
+    option_a = Column(Text, nullable=True)
+    option_b = Column(Text, nullable=True)
+    option_c = Column(Text, nullable=True)
+    option_d = Column(Text, nullable=True)
+    correct_option = Column(String(25), nullable=True)  # Option A, B, C, D
+    explanation = Column(Text, nullable=True)
     # language = Column(String(25), nullable=True)  # Optional: 'English', 'Hindi', etc.
     # subject = Column(Text, nullable=True)
     # difficulty_level = Column(String(25), nullable=True)
@@ -115,8 +115,8 @@ class Question(Base):
     # attempted_number = Column(Integer, default=0)
 
     # # ForeignKey and Relationship to QuestionPaper
-    # question_paper_id = Column(Integer, ForeignKey("question_paper.id"), nullable=False)
-    # question_paper = relationship("QuestionPaper", back_populates="questions")
+    question_paper_id = Column(Integer, ForeignKey("pts_questionpaper.id"), nullable=False)
+    question_paper = relationship("QuestionPaper", back_populates="questions")
 
     # def __repr__(self):
     #     return f"<Question(id={self.id}, question_number={self.question_number})>"

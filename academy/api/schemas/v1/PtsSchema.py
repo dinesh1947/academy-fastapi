@@ -30,9 +30,13 @@ class QuestionPaperSchema(BaseModel):
 
 
 
+
 class QuestionSchema(BaseModel):
     id: int
     question_number: int
+    question_paper_id: int
+    question_paper: QuestionPaperSchema
+    
     model_config = {"from_attributes": True}
 
 
