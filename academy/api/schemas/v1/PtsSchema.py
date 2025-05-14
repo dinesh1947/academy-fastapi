@@ -20,11 +20,19 @@ class TestSchema(BaseModel):
     
 
 
-
-
 class QuestionPaperSchema(BaseModel):
     id: int
     name: str
+    model_config = {"from_attributes": True}
+
+
+
+
+
+
+class QuestionSchema(BaseModel):
+    id: int
+    question_number: int
     model_config = {"from_attributes": True}
 
 

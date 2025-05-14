@@ -95,24 +95,24 @@ class QuestionPaper(Base):
 
 
 class Question(Base):
-    __tablename__ = 'question'
+    __tablename__ = 'pts_question'
 
     id = Column(Integer, primary_key=True, index=True)
     question_number = Column(Integer, nullable=True)
-    question_text = Column(Text, nullable=True)
-    option_a = Column(Text, nullable=True)
-    option_b = Column(Text, nullable=True)
-    option_c = Column(Text, nullable=True)
-    option_d = Column(Text, nullable=True)
-    correct_option = Column(String(25), nullable=True)  # Option A, B, C, D
-    explanation = Column(Text, nullable=True)
-    language = Column(String(25), nullable=True)  # Optional: 'English', 'Hindi', etc.
-    subject = Column(Text, nullable=True)
-    difficulty_level = Column(String(25), nullable=True)
-    statement = Column(Text, nullable=True)
-    direction = Column(Text, nullable=True)
-    is_negative = Column(Boolean, default=True)  # If negative marking is applied
-    attempted_number = Column(Integer, default=0)
+    question = Column(Text, nullable=True)
+    # option_a = Column(Text, nullable=True)
+    # option_b = Column(Text, nullable=True)
+    # option_c = Column(Text, nullable=True)
+    # option_d = Column(Text, nullable=True)
+    # correct_option = Column(String(25), nullable=True)  # Option A, B, C, D
+    # explanation = Column(Text, nullable=True)
+    # language = Column(String(25), nullable=True)  # Optional: 'English', 'Hindi', etc.
+    # subject = Column(Text, nullable=True)
+    # difficulty_level = Column(String(25), nullable=True)
+    # statement = Column(Text, nullable=True)
+    # direction = Column(Text, nullable=True)
+    # is_negative = Column(Boolean, default=True)  # If negative marking is applied
+    # attempted_number = Column(Integer, default=0)
 
     # # ForeignKey and Relationship to QuestionPaper
     # question_paper_id = Column(Integer, ForeignKey("question_paper.id"), nullable=False)
