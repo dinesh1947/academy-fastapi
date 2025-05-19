@@ -1,108 +1,73 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float,DateTime, SmallInteger,UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
+# api/models/v1/UserCourseModel.py
+
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
-from sqlalchemy.orm import relationship
-from api.models.v1.PtsModel import Question 
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, Integer, Boolean, DateTime, SmallInteger, UniqueConstraint, ForeignKey
 
+from .base import Base
 
-Base = declarative_base()
-
-
-
-
-
-
-# class UserCoursePackage(Base):
-#     __tablename__ = "user_courses_usercoursepackage"
-#     id = Column(Integer, primary_key=True, index=True)
-#     user_id = Column(Integer)
-#     test_series_id = Column(Integer)
-#     course_id = Column(Integer)
-#     package_id = Column(Integer)
-#     added_by =Column(String, default="Online")
-#     source = Column(String,  default="admin panel")
-#     rating = Column(Integer, default=0)
-#     review_title = Column(String,  default="")
-#     review = Column(String,  default="")
-#     mts_id = Column(Integer)
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
+if TYPE_CHECKING:
+    from .PtsModel import Question  # for type hint only
 
 
 class UserTest(Base):
     __tablename__ = "user_courses_usertest"
 
-    id = Column(Integer, primary_key=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=None)
-    user_course_package_id = Column(Integer)
-    test_id = Column(Integer)
-    question_paper_id = Column(Integer, nullable=True)
-    is_agree = Column(Boolean, default=False)
-    correct_answer = Column(Integer, default=0)
-    incorrect_answer = Column(Integer, default=0)
-    not_answer = Column(Integer, default=0)
-    time_spent = Column(Integer, default=0)
-    score = Column(Float, default=None)
-    rank = Column(Integer, nullable=True)
-    consolidated_rank = Column(Integer, nullable=True)
-    test_status = Column(String, default="start")
-    answer_mode = Column(String, default="web")
-    start_at = Column(DateTime, nullable=True)
-    end_at = Column(DateTime, nullable=True)
-    restart_number = Column(Integer, default=0)
-    language = Column(String, default="")
-    test_type = Column(String, default="pts")
-    answers = relationship("UserTestAnswer", back_populates="user_test", cascade="all, delete-orphan")
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(default=None)
 
+    user_course_package_id: Mapped[int] = mapped_column()
+    test_id: Mapped[int] = mapped_column()
+    question_paper_id: Mapped[Optional[int]] = mapped_column(nullable=True)
 
+    is_agree: Mapped[bool] = mapped_column(default=False)
+    correct_answer: Mapped[int] = mapped_column(default=0)
+    incorrect_answer: Mapped[int] = mapped_column(default=0)
+    not_answer: Mapped[int] = mapped_column(default=0)
+    time_spent: Mapped[int] = mapped_column(default=0)
 
+    score: Mapped[Optional[float]] = mapped_column(default=None)
+    rank: Mapped[Optional[int]] = mapped_column(nullable=True)
+    consolidated_rank: Mapped[Optional[int]] = mapped_column(nullable=True)
 
+    test_status: Mapped[str] = mapped_column(String, default="start")
+    answer_mode: Mapped[str] = mapped_column(String, default="web")
 
+    start_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    end_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+
+    restart_number: Mapped[int] = mapped_column(default=0)
+    language: Mapped[str] = mapped_column(String, default="")
+    test_type: Mapped[str] = mapped_column(String, default="pts")
+
+    # Use string reference here to avoid import loop
+    answers: Mapped[List["UserTestAnswer"]] = relationship(
+        "UserTestAnswer",
+        back_populates="user_test",
+        cascade="all, delete-orphan"
+    )
 
 
 class UserTestAnswer(Base):
-    __tablename__ = "user_test_answer"
+    __tablename__ = "user_courses_usertestanswer"
     __table_args__ = (
         UniqueConstraint("user_test_id", "question_number", name="uq_user_test_question_number"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
-    # question_paper_id = Column(Integer, ForeignKey("question_paper.id", ondelete="SET NULL"), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    question_number = Column(SmallInteger, nullable=True)
-    answer = Column(String(20), nullable=True, default='')
-    is_correct = Column(Integer, nullable=True, default=0)
-    score_status = Column(Integer, nullable=True, default=0)
-    mark_for_review = Column(Boolean, default=False)
-    respond_at = Column(DateTime, nullable=True)
-    how_sure = Column(String(4), nullable=True)
+    question_number: Mapped[Optional[int]] = mapped_column(SmallInteger, nullable=True)
+    answer: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, default='')
+    is_correct: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+    score_status: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+    mark_for_review: Mapped[bool] = mapped_column(Boolean, default=False)
+    respond_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    how_sure: Mapped[Optional[str]] = mapped_column(String(4), nullable=True)
 
+    user_test_id: Mapped[int] = mapped_column(ForeignKey("user_courses_usertest.id", ondelete="CASCADE"), nullable=False)
+    user_test: Mapped["UserTest"] = relationship("UserTest", back_populates="answers")
 
-    user_test_id = Column(Integer,ForeignKey("user_courses_usertest.id", ondelete="CASCADE"),nullable=False)
-    user_test = relationship("UserTest", back_populates="answers")
-
-
-    # question_id = Column(Integer, ForeignKey("pts_question.id", ondelete="SET NULL"), nullable=True)
-    # question = relationship("Question", back_populates="user_test_answers")
-
-
-    question_id = Column(Integer, ForeignKey("pts_question.id", ondelete="SET NULL"), nullable=True)
-    # question = relationship(Question, back_populates="user_test_answers")
-    
-
-   
-
-    
+    question_id: Mapped[Optional[int]] = mapped_column(ForeignKey("pts_question.id", ondelete="SET NULL"))
+    question: Mapped[Optional["Question"]] = relationship("Question", back_populates="user_test_answers")

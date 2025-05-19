@@ -10,6 +10,11 @@ from utils.project_jwt import *
 from utils.pagination import *
 from api.models.v1.UserCourseModel import *
 from api.schemas.v1.UserCourseSchema import *
+from sqlalchemy.orm import joinedload
+import json
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+
 
 
 
@@ -24,12 +29,12 @@ def get_test_users(
     page: int = 1,
     page_size: int = 10,
 ):
-    query = db.query(UserTest).order_by(UserTest.id)  # Add any filters or joins if needed
+    query = db.query(UserTest).order_by(UserTest.id)  
 
     return paginate_query(
         request=request,
         query=query,
-        schema=UserTestSchema,  # Pydantic schema for UserTest
+        schema=UserTestSchema,  
         page=page,
         page_size=page_size
     )
@@ -38,39 +43,22 @@ def get_test_users(
 
 
 
-# @router.get("/", response_model=List[TestUserRead])
-# def get_test_users(db: Session = Depends(get_sync_db), current_user: User = Depends(get_current_user_sync) ):
-#     try:
-#         print("**********************>>>>>>>>>")
-#         # Fetch test users from the database synchronously
-#         test_users = db.query(TestUser).order_by(TestUser.id).limit(10).all()
-#         return test_users
-#     except Exception as e:
-#         # Handle exceptions (e.g., database errors)
-#         print(f"Error fetching test users: {e}")
-#         raise HTTPException(status_code=500, detail="Error fetching test users")
+@router.get("/user-test-answer-list", response_model=PaginatedResponse[UserTestAnswerSchema])
+def get_test_user_answer(
+    request: Request,
+    db: Session = Depends(get_sync_db),
+    page: int = 1,
+    page_size: int = 10,
+):
+    query = db.query(UserTestAnswer).options(joinedload(UserTestAnswer.question)).order_by(UserTestAnswer.id)
 
-
-
-
-
-# @router.get("/all-test/", response_model=List[UserCoursePackageResponse])
-# def get_all_test(db: Session = Depends(get_sync_db), current_user: User = Depends(get_current_user_sync) ):
-#     try:
-#         print("**********************>>>>>>>>>")
-#         print(current_user)
-#         print(type(current_user))
-#         print(current_user.id)
-#         print("###################################################################")
-#         # Fetch test users from the database synchronously
-#         # ucp = db.query(UserCoursePackage).order_by(UserCoursePackage.id).limit(10).all()
-#         # ucp = db.query(UserCoursePackage).filter(UserCoursePackage.user_id == current_user.id).order_by(UserCoursePackage.id).limit(10).all()
-#         ucp = db.query(UserCoursePackage).filter(UserCoursePackage.user_id == current_user.id).filter(UserCoursePackage.test_series_id.isnot(None))
-#         return ucp
-#     except Exception as e:
-#         # Handle exceptions (e.g., database errors)
-#         print(f"Error fetching test users: {e}")
-#         raise HTTPException(status_code=500, detail="Error fetching test users")
+    return paginate_query(
+        request=request,
+        query=query,
+        schema=UserTestAnswerSchema,  
+        page=page,
+        page_size=page_size
+    )
 
 
 
@@ -79,61 +67,51 @@ def get_test_users(
 
 
 
-
-
-# @router.get("/list", response_model=PaginatedResponse)
-# def get_test_users(
+# @router.post("/update-uta-is-correct-by-test", response_model=PaginatedResponse[UserTestAnswerSchema])
+# async def get_test_user_answer(
+#     request: Request,
 #     db: Session = Depends(get_sync_db),
-#     current_user: User = Depends(get_current_user_sync),
-#     page: int = Query(1, ge=1),
-#     page_size: int = Query(10, ge=1, le=100)
+#     page: int = 1,
+#     page_size: int = 10,
 # ):
-#     try:
-#         base_url="http://127.0.0.1:8000/api/v1/user-course/list"
-#         paginator = Paginator(db=db, model=TestUser, pydantic_model=TestUserRead,base_url=base_url,page=page, page_size=page_size)
-#         response = paginator.get_paginated_response()        
-#         # print("Paginated Response:", response)  # Check the structure of the response
-#         return response
+#     raw_body = await request.body()  # await here works in async def
+#     body_str = raw_body.decode('utf-8')
+#     body = json.loads(body_str)
 
-#     except HTTPException as e:
-#         print(f"Authentication failed: {e.detail}")
-#         raise e  # Re-raise the authentication error
-
-#     except Exception as e:
-#         print(f"Error fetching test users: {e}")
-#         raise HTTPException(status_code=500, detail="Error fetching test users")
+#     test_id = body.get("test_id")
+#     print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKUUUUUUUUUUUUUUUUUUUUUUUUUUUUUoooooooooooooooooooooooU")
+#     print(test_id)
+#     print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
 
 
 
 
+#     user_test_ids = db.query(UserTest.id).filter(UserTest.test_id == test_id,UserTest.test_status == "completed" )
+#     print(user_test_ids)
+#     print("KKKKKKKKKKKKKKKKKKKKKKKeeeeeeeeeeeeddddddddddddddddddddddd")
 
 
-
-
-
-
-
-# @router.get("/async/", response_model=List[TestUserRead])
-# async def get_first_and_last_test_users(db: AsyncSession = Depends(get_async_db),
-#     current_user: User = Depends(get_current_user_async)):
-
-#     first_query = select(TestUser).order_by(TestUser.id).limit(10)
-#     last_query = select(TestUser).order_by(TestUser.id.desc()).limit(10)
-
-#     first_result, last_result = await asyncio.gather(
-#         db.execute(first_query),
-#         db.execute(last_query)
+#     query = (
+#         db.query(UserTestAnswer)
+#         .filter(UserTestAnswer.user_test_id.in_(user_test_ids))
+#         .options(joinedload(UserTestAnswer.question))
+#         .order_by(UserTestAnswer.id)
 #     )
 
-#     first_test_users = first_result.scalars().all()
-#     last_test_users = list(reversed(last_result.scalars().all()))
-
-#     return first_test_users + last_test_users
+#     print(query)
+#     print("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUEEEEEEEEEEEEEEEEEEEEEEEEEE")
 
 
 
 
 
+#     return paginate_query(
+#         request=request,
+#         query=query,
+#         schema=UserTestAnswerSchema,  
+#         page=page,
+#         page_size=page_size
+#     )
 
 
 
@@ -143,66 +121,206 @@ def get_test_users(
 
 
 
-
-
-
-# ####### Fetch a single TestUser by ID
-# @router.get("/{test_user_id}", response_model=TestUserRead)
-# def get_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
-#     """
-#     Fetch a single TestUser by its ID.
-#     """
-#     test_user = db.query(UserTest).filter(UserTest.id == test_user_id).first()
-#     if not test_user:
-#         raise HTTPException(status_code=404, detail="TestUser not found")
-#     return test_user
-
-# # Create a new TestUser
-# @router.post("/", response_model=TestUserRead)
-# def create_test_user(test_user: TestUserCreate, db: Session = Depends(get_sync_db)):
-#     """
-#     Create a new TestUser record.
-#     """
-#     new_test_user = UserTest(**test_user.dict())
-#     db.add(new_test_user)
-#     db.commit()
-#     db.refresh(new_test_user)
-#     return new_test_user
-
-
-
-
-# # Update an existing TestUser by ID
-# @router.put("/{test_user_id}", response_model=TestUserRead)
-# def update_test_user(
-#     test_user_id: int, test_user: TestUserUpdate, db: Session = Depends(get_sync_db)
+# @router.post("/update-uta-is-correct-by-test")
+# async def update_uta_is_correct_by_test(
+#     request: Request,
+#     db: Session = Depends(get_sync_db),
 # ):
-#     """
-#     Update an existing TestUser by its ID.
-#     """
-#     existing_test_user = db.query(TestUser).filter(TestUser.id == test_user_id).first()
-#     if not existing_test_user:
-#         raise HTTPException(status_code=404, detail="TestUser not found")
-#     for key, value in test_user.dict(exclude_unset=True).items():
-#         setattr(existing_test_user, key, value)
-#     db.commit()
-#     db.refresh(existing_test_user)
-#     return existing_test_user
+#     raw_body = await request.body()
+#     body = json.loads(raw_body.decode("utf-8"))
 
-# # Delete a TestUser by ID
-# @router.delete("/{test_user_id}", response_model=dict)
-# def delete_test_user(test_user_id: int, db: Session = Depends(get_sync_db)):
-#     """
-#     Delete a TestUser by its ID.
-#     """
-#     test_user = db.query(UserTest).filter(UserTest.id == test_user_id).first()
-#     if not test_user:
-#         raise HTTPException(status_code=404, detail="TestUser not found")
-#     db.delete(test_user)
-#     db.commit()
-#     return {"message": "TestUser deleted successfully"}
+#     test_id = body.get("test_id")
+#     if not test_id:
+#         raise HTTPException(status_code=400, detail="Missing 'test_id' in request body.")
+
+#     user_test_ids = [
+#         t[0] for t in db.query(UserTest.id).filter(
+#             UserTest.test_id == test_id,
+#             UserTest.test_status == "completed"
+#         ).all()
+#     ]
+
+#     if not user_test_ids:
+
+#         return JSONResponse(
+#             status_code=404,
+#             content={"flag": 0, "message": "No completed user tests found", "data": 0}
+#         )
+        
 
 
 
+#     answers = db.query(UserTestAnswer).options(joinedload(UserTestAnswer.question)).filter(
+#         UserTestAnswer.user_test_id.in_(user_test_ids)
+#     ).all()
+
+#     for uta in answers:
+#         answer = (uta.answer or "").strip().lower()
+#         correct_option = (uta.question.correct_option or "").strip().lower()
+
+#         if not answer:
+#             uta.is_correct = 0
+#         elif answer == correct_option:
+#             uta.is_correct = 1
+#         else:
+#             uta.is_correct = -1
+
+#     try:
+#         db.commit()
+#     except Exception as e:
+#         db.rollback()
+#         return JSONResponse(
+#             status_code=500,
+#             content={"flag": 0, "message": "Failed to update user test answers", "data": 0}
+#         )
+
+#     result_data = len(answers)
+
+#     return JSONResponse(
+#         status_code=200,
+#         content={
+#             "flag": 1,
+#             "message": f"{result_data} user test answers updated successfully",
+#             "data": result_data
+#         }
+#     )       
 
 
+
+
+
+
+
+
+
+
+
+@router.post("/update-uta-is-correct-by-test")
+async def update_uta_is_correct_by_test(request: Request,db: Session = Depends(get_sync_db),):
+    raw_body = await request.body()
+    body = json.loads(raw_body.decode("utf-8"))
+
+    test_id = body.get("test_id")
+    if not test_id:
+        raise HTTPException(status_code=400, detail="Missing 'test_id' in request body.")
+
+    user_test_id_result = db.execute(text("""
+        SELECT id FROM user_courses_usertest
+        WHERE test_id = :test_id AND test_status = 'completed'
+    """), {"test_id": test_id})
+
+    user_test_ids = [row[0] for row in user_test_id_result.fetchall()]
+
+    if not user_test_ids:
+        return JSONResponse(content={"flag": 0, "message": "No completed user tests found", "data": 0}, status_code=404)
+
+    ut_ids = ",".join(str(uid) for uid in user_test_ids)
+
+    try:
+        print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+        update_query = f"""
+        UPDATE user_courses_usertestanswer uta
+        JOIN pts_question q ON uta.question_id = q.id
+        SET uta.is_correct = 
+        CASE
+            WHEN TRIM(LOWER(uta.answer)) = '' THEN 0
+            WHEN TRIM(LOWER(uta.answer)) = TRIM(LOWER(q.correct_option)) THEN 1
+            ELSE -1
+        END
+        WHERE uta.user_test_id IN ({ut_ids})
+        """
+        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSss")
+        result = db.execute(text(update_query))
+        db.commit()
+
+
+
+
+
+
+
+        print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ")
+    except Exception:
+        db.rollback()
+        return JSONResponse(content={"flag": 0, "message": "Failed to update user test answers", "data": 0},status_code=500)
+
+    updated_count = result.rowcount  
+
+
+
+
+
+    user_test_id_result = db.execute(text("""SELECT * FROM pts_test WHERE id = :test_id """), {"test_id": test_id})
+    print(user_test_id_result)
+    first_row = user_test_id_result.fetchone()
+    # print(first_row)
+    # print(dict(first_row._mapping))
+
+    x = dict(first_row._mapping)
+    print(x['question_paper_id'])  
+
+    question_paper_id =  x['question_paper_id']
+
+
+    rows = db.execute(
+        text("""
+            SELECT
+                question_id,
+                COUNT(CASE WHEN is_correct =  1 THEN 1 END) AS correct_answer,
+                COUNT(CASE WHEN is_correct =  0 THEN 1 END) AS incorrect_answer,
+                COUNT(CASE WHEN is_correct = -1 THEN 1 END) AS not_answer
+            FROM user_courses_usertestanswer
+            WHERE question_paper_id = :question_paper_id
+            GROUP BY question_id
+            ORDER BY question_id
+        """),
+        {"question_paper_id": question_paper_id}
+    ).fetchall()
+
+
+
+    correct_answer_case = "CASE id\n"
+    incorrect_answer_case = "CASE id\n"
+    not_answer_case = "CASE id\n"
+    question_ids = []
+
+
+    for row in rows:
+        question_id = row._mapping["question_id"]
+        question_ids.append(str(question_id))
+        correct_answer_case += f"    WHEN {question_id} THEN {row._mapping['correct_answer']}\n"
+        incorrect_answer_case += f"    WHEN {question_id} THEN {row._mapping['incorrect_answer']}\n"
+        not_answer_case += f"    WHEN {question_id} THEN {row._mapping['not_answer']}\n"
+
+    correct_answer_case += "    ELSE correct_answer END"
+    incorrect_answer_case += "    ELSE incorrect_answer END"
+    not_answer_case += "    ELSE not_answer END"
+
+    question_ids_str = ", ".join(question_ids)
+
+    update_query = f"""
+        UPDATE pts_question
+        SET
+            correct_answer = {correct_answer_case},
+            incorrect_answer = {incorrect_answer_case},
+            not_answer = {not_answer_case}
+        WHERE id IN ({question_ids_str})
+    """
+
+    db.execute(text(update_query))
+    db.commit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    return JSONResponse(content={"flag": 1,"message": f"Updated successfully","data": updated_count},status_code=200 )
