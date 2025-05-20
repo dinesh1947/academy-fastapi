@@ -10,12 +10,36 @@ import traceback
 from sqlalchemy.orm import Session
 from config.database import get_async_db
 import asyncio
-
 from api.endpoints.v1 import router as v1_router
-
-
-
 import jwt
+
+
+
+
+
+
+
+
+
+
+
+
+# import logging
+
+# logging.basicConfig(level=logging.INFO)  # general app logging level
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+
+
+
+
+
+
+
+
+
+
+
 from exception_handlers import jwt_expired_handler, jwt_invalid_token_handler, global_exception_handler,not_authenticated_handler
 
 

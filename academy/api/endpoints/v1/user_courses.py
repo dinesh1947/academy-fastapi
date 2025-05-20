@@ -14,6 +14,7 @@ from sqlalchemy.orm import joinedload
 import json
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from fastapi import BackgroundTasks
 
 
 
@@ -192,46 +193,93 @@ def get_test_user_answer(
 
 
 
+# @router.post("/update-uta-is-correct-by-test")
+# async def update_uta_is_correct_by_test(request: Request,db: Session = Depends(get_sync_db),):
+#     raw_body = await request.body()
+#     body = json.loads(raw_body.decode("utf-8"))
+#     test_id = body.get("test_id")
+#     if not test_id:
+#         raise HTTPException(status_code=400, detail="Missing 'test_id' in request body.")
+#     user_test_id_result = db.execute(text("""
+#         SELECT id FROM user_courses_usertest
+#         WHERE test_id = :test_id AND test_status = 'completed'
+#     """), {"test_id": test_id})
+#     user_test_ids = [row[0] for row in user_test_id_result.fetchall()]
+#     if not user_test_ids:
+#         return JSONResponse(content={"flag": 0, "message": "No completed user tests found", "data": 0}, status_code=404)
+#     ut_ids = ",".join(str(uid) for uid in user_test_ids)
+#     try:
+#         print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+#         update_query = f"""
+#         UPDATE user_courses_usertestanswer uta
+#         JOIN pts_question q ON uta.question_id = q.id
+#         SET uta.is_correct = 
+#         CASE
+#             WHEN TRIM(LOWER(uta.answer)) = '' THEN 0
+#             WHEN TRIM(LOWER(uta.answer)) = TRIM(LOWER(q.correct_option)) THEN 1
+#             ELSE -1
+#         END
+#         WHERE uta.user_test_id IN ({ut_ids})
+#         """
+#         print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSss")
+#         result = db.execute(text(update_query))
+#         db.commit()
+#         print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ")
+#     except Exception:
+#         db.rollback()
+#         return JSONResponse(content={"flag": 0, "message": "Failed to update user test answers", "data": 0},status_code=500)
+#     updated_count = result.rowcount  
+#     user_test_id_result = db.execute(text("""SELECT * FROM pts_test WHERE id = :test_id """), {"test_id": test_id})
+#     print(user_test_id_result)
+#     first_row = user_test_id_result.fetchone()
+#     # print(first_row)
+#     # print(dict(first_row._mapping))
+#     x = dict(first_row._mapping)
+#     print(x['question_paper_id'])  
+#     question_paper_id =  x['question_paper_id']
+#     rows = db.execute(
+#         text("""
+#             SELECT
+#                 question_id,
+#                 COUNT(CASE WHEN is_correct =  1 THEN 1 END) AS correct_answer,
+#                 COUNT(CASE WHEN is_correct =  0 THEN 1 END) AS incorrect_answer,
+#                 COUNT(CASE WHEN is_correct = -1 THEN 1 END) AS not_answer
+#             FROM user_courses_usertestanswer
+#             WHERE question_paper_id = :question_paper_id
+#             GROUP BY question_id
+#             ORDER BY question_id
+#         """),
+#         {"question_paper_id": question_paper_id}
+#     ).fetchall()
+
+#     correct_answer_case = "CASE id\n"
+#     incorrect_answer_case = "CASE id\n"
+#     not_answer_case = "CASE id\n"
+#     question_ids = []
+#     for row in rows:
+#         question_id = row._mapping["question_id"]
+#         question_ids.append(str(question_id))
+#         correct_answer_case += f"    WHEN {question_id} THEN {row._mapping['correct_answer']}\n"
+#         incorrect_answer_case += f"    WHEN {question_id} THEN {row._mapping['incorrect_answer']}\n"
+#         not_answer_case += f"    WHEN {question_id} THEN {row._mapping['not_answer']}\n"
+#     correct_answer_case += "    ELSE correct_answer END"
+#     incorrect_answer_case += "    ELSE incorrect_answer END"
+#     not_answer_case += "    ELSE not_answer END"
+#     question_ids_str = ", ".join(question_ids)
+#     update_query = f"""
+#         UPDATE pts_question
+#         SET
+#             correct_answer = {correct_answer_case},
+#             incorrect_answer = {incorrect_answer_case},
+#             not_answer = {not_answer_case}
+#         WHERE id IN ({question_ids_str})
+#     """
+#     db.execute(text(update_query))
+#     db.commit()
+#     return JSONResponse(content={"flag": 1,"message": f"Updated successfully","data": updated_count},status_code=200 )
 
 
 
-@router.post("/update-uta-is-correct-by-test")
-async def update_uta_is_correct_by_test(request: Request,db: Session = Depends(get_sync_db),):
-    raw_body = await request.body()
-    body = json.loads(raw_body.decode("utf-8"))
-
-    test_id = body.get("test_id")
-    if not test_id:
-        raise HTTPException(status_code=400, detail="Missing 'test_id' in request body.")
-
-    user_test_id_result = db.execute(text("""
-        SELECT id FROM user_courses_usertest
-        WHERE test_id = :test_id AND test_status = 'completed'
-    """), {"test_id": test_id})
-
-    user_test_ids = [row[0] for row in user_test_id_result.fetchall()]
-
-    if not user_test_ids:
-        return JSONResponse(content={"flag": 0, "message": "No completed user tests found", "data": 0}, status_code=404)
-
-    ut_ids = ",".join(str(uid) for uid in user_test_ids)
-
-    try:
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-        update_query = f"""
-        UPDATE user_courses_usertestanswer uta
-        JOIN pts_question q ON uta.question_id = q.id
-        SET uta.is_correct = 
-        CASE
-            WHEN TRIM(LOWER(uta.answer)) = '' THEN 0
-            WHEN TRIM(LOWER(uta.answer)) = TRIM(LOWER(q.correct_option)) THEN 1
-            ELSE -1
-        END
-        WHERE uta.user_test_id IN ({ut_ids})
-        """
-        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSss")
-        result = db.execute(text(update_query))
-        db.commit()
 
 
 
@@ -239,29 +287,80 @@ async def update_uta_is_correct_by_test(request: Request,db: Session = Depends(g
 
 
 
-        print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ")
-    except Exception:
-        db.rollback()
-        return JSONResponse(content={"flag": 0, "message": "Failed to update user test answers", "data": 0},status_code=500)
-
-    updated_count = result.rowcount  
 
 
 
 
 
-    user_test_id_result = db.execute(text("""SELECT * FROM pts_test WHERE id = :test_id """), {"test_id": test_id})
-    print(user_test_id_result)
-    first_row = user_test_id_result.fetchone()
-    # print(first_row)
-    # print(dict(first_row._mapping))
-
-    x = dict(first_row._mapping)
-    print(x['question_paper_id'])  
-
-    question_paper_id =  x['question_paper_id']
+def update_user_test(db: Session, ut_ids: list[int]):
+    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+    print(ut_ids)
+    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+    if not ut_ids:
+        return
 
 
+
+    rows = db.execute(
+        text(f"""
+            SELECT
+                user_test_id,
+                COUNT(CASE WHEN is_correct = 1 THEN 1 END) AS correct_answer,
+                COUNT(CASE WHEN is_correct = 0 THEN 1 END) AS incorrect_answer,
+                COUNT(CASE WHEN is_correct = -1 THEN 1 END) AS not_answer
+            FROM user_courses_usertestanswer
+            WHERE user_test_id IN ({ut_ids})
+            GROUP BY user_test_id
+        """),
+        
+    ).fetchall()
+
+    if not rows:
+        return
+
+    correct_answer_case = "CASE user_courses_usertest.id\n"
+    incorrect_answer_case = "CASE user_courses_usertest.id\n"
+    not_answer_case = "CASE user_courses_usertest.id\n"
+    user_test_ids = []
+
+    for row in rows:
+        user_test_id = row._mapping["user_test_id"]
+        user_test_ids.append(user_test_id)
+        correct_answer_case += f"    WHEN {user_test_id} THEN {row._mapping['correct_answer']}\n"
+        incorrect_answer_case += f"    WHEN {user_test_id} THEN {row._mapping['incorrect_answer']}\n"
+        not_answer_case += f"    WHEN {user_test_id} THEN {row._mapping['not_answer']}\n"
+
+    correct_answer_case += "    ELSE correct_answer END"
+    incorrect_answer_case += "    ELSE incorrect_answer END"
+    not_answer_case += "    ELSE not_answer END"
+
+    id_str = ", ".join(str(i) for i in user_test_ids)
+
+    update_query = f"""
+        UPDATE user_courses_usertest
+        SET
+            correct_answer = {correct_answer_case},
+            incorrect_answer = {incorrect_answer_case},
+            not_answer = {not_answer_case}
+        WHERE id IN ({id_str})
+    """
+
+    db.execute(text(update_query))
+    db.commit()
+    return len(user_test_ids)
+
+
+
+
+
+
+
+
+
+
+
+
+def update_pts_question_stats(db: Session, question_paper_id: int):
     rows = db.execute(
         text("""
             SELECT
@@ -277,13 +376,10 @@ async def update_uta_is_correct_by_test(request: Request,db: Session = Depends(g
         {"question_paper_id": question_paper_id}
     ).fetchall()
 
-
-
     correct_answer_case = "CASE id\n"
     incorrect_answer_case = "CASE id\n"
     not_answer_case = "CASE id\n"
     question_ids = []
-
 
     for row in rows:
         question_id = row._mapping["question_id"]
@@ -314,13 +410,75 @@ async def update_uta_is_correct_by_test(request: Request,db: Session = Depends(g
 
 
 
+@router.post("/update-uta-is-correct-by-test")
+async def update_uta_is_correct_by_test(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_sync_db),
+):
+    raw_body = await request.body()
+    body = json.loads(raw_body.decode("utf-8"))
+    test_id = body.get("test_id")
+    if not test_id:
+        raise HTTPException(status_code=400, detail="Missing 'test_id' in request body.")
+
+    user_test_id_result = db.execute(text("""
+        SELECT id FROM user_courses_usertest
+        WHERE test_id = :test_id AND test_status = 'completed'
+    """), {"test_id": test_id})
+    user_test_ids = [row[0] for row in user_test_id_result.fetchall()]
+
+    if not user_test_ids:
+        return JSONResponse(
+            content={"flag": 0, "message": "No completed user tests found", "data": 0},
+            status_code=404,
+        )
+
+    ut_ids = ",".join(str(uid) for uid in user_test_ids)
+
+    try:
+        update_query = f"""
+        UPDATE user_courses_usertestanswer uta
+        JOIN pts_question q ON uta.question_id = q.id
+        SET uta.is_correct = 
+        CASE
+            WHEN TRIM(LOWER(uta.answer)) = '' THEN 0
+            WHEN TRIM(LOWER(uta.answer)) = TRIM(LOWER(q.correct_option)) THEN 1
+            ELSE -1
+        END
+        WHERE uta.user_test_id IN ({ut_ids})
+        """
+        result = db.execute(text(update_query))
+        db.commit()
+    except Exception:
+        db.rollback()
+        return JSONResponse(
+            content={"flag": 0, "message": "Failed to update user test answers", "data": 0},
+            status_code=500,
+        )
+
+    updated_count = result.rowcount
+
+    test_row = db.execute(
+        text("""SELECT question_paper_id FROM pts_test WHERE id = :test_id"""),
+        {"test_id": test_id},
+    ).fetchone()
+
+    if test_row is None:
+        return JSONResponse(
+            content={"flag": 0, "message": "Test not found", "data": 0},
+            status_code=404,
+        )
+
+    question_paper_id = test_row._mapping["question_paper_id"]
+
+    # Add the background task that updates pts_question stats asynchronously
+    background_tasks.add_task(update_user_test, db, ut_ids)
+    background_tasks.add_task(update_pts_question_stats, db, question_paper_id)
+
+    return JSONResponse(
+        content={"flag": 1, "message": "Updated successfully", "data": updated_count},
+        status_code=200,
+    )
 
 
-
-
-
-
-
-
-
-    return JSONResponse(content={"flag": 1,"message": f"Updated successfully","data": updated_count},status_code=200 )
