@@ -292,10 +292,30 @@ def get_test_user_answer(
 
 
 
-def update_user_test(db: Session, ut_ids: list[int]):
-    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
-    print(ut_ids)
-    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
+def update_user_test(db: Session, ut_ids: list[int],test_id):
+ 
+    test = db.execute(
+            text("""
+                SELECT 
+                    id,
+                    name,
+                    duration,
+                    question_paper_id,
+                    mark_per_right,
+                    mark_per_wrong
+                FROM pts_test
+                WHERE id = :test_id
+                LIMIT 1
+            """),
+            {"test_id": test_id}
+        ).fetchone()
+    
+
+    mark_per_right = test._mapping["mark_per_right"]
+    mark_per_wrong = test._mapping["mark_per_wrong"]
+
+
+
     if not ut_ids:
         return
 
@@ -318,9 +338,13 @@ def update_user_test(db: Session, ut_ids: list[int]):
     if not rows:
         return
 
+
+
+
     correct_answer_case = "CASE user_courses_usertest.id\n"
     incorrect_answer_case = "CASE user_courses_usertest.id\n"
     not_answer_case = "CASE user_courses_usertest.id\n"
+    score_case = "CASE user_courses_usertest.id\n"
     user_test_ids = []
 
     for row in rows:
@@ -329,10 +353,16 @@ def update_user_test(db: Session, ut_ids: list[int]):
         correct_answer_case += f"    WHEN {user_test_id} THEN {row._mapping['correct_answer']}\n"
         incorrect_answer_case += f"    WHEN {user_test_id} THEN {row._mapping['incorrect_answer']}\n"
         not_answer_case += f"    WHEN {user_test_id} THEN {row._mapping['not_answer']}\n"
+     
+        score_case += (f"    WHEN {user_test_id} THEN ROUND({row._mapping['correct_answer']} * {mark_per_right} - "f"{row._mapping['incorrect_answer']} * {mark_per_right} / {mark_per_wrong}, 2)\n")
+
+
+
 
     correct_answer_case += "    ELSE correct_answer END"
     incorrect_answer_case += "    ELSE incorrect_answer END"
     not_answer_case += "    ELSE not_answer END"
+    score_case += "    ELSE NULL END"
 
     id_str = ", ".join(str(i) for i in user_test_ids)
 
@@ -341,17 +371,14 @@ def update_user_test(db: Session, ut_ids: list[int]):
         SET
             correct_answer = {correct_answer_case},
             incorrect_answer = {incorrect_answer_case},
-            not_answer = {not_answer_case}
+            not_answer = {not_answer_case},
+            score = {score_case}
         WHERE id IN ({id_str})
     """
 
     db.execute(text(update_query))
     db.commit()
     return len(user_test_ids)
-
-
-
-
 
 
 
@@ -411,11 +438,7 @@ def update_pts_question_stats(db: Session, question_paper_id: int):
 
 
 @router.post("/update-uta-is-correct-by-test")
-async def update_uta_is_correct_by_test(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_sync_db),
-):
+async def update_uta_is_correct_by_test(request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_sync_db), ):
     raw_body = await request.body()
     body = json.loads(raw_body.decode("utf-8"))
     test_id = body.get("test_id")
@@ -473,7 +496,7 @@ async def update_uta_is_correct_by_test(
     question_paper_id = test_row._mapping["question_paper_id"]
 
     # Add the background task that updates pts_question stats asynchronously
-    background_tasks.add_task(update_user_test, db, ut_ids)
+    background_tasks.add_task(update_user_test, db, ut_ids,test_id)
     background_tasks.add_task(update_pts_question_stats, db, question_paper_id)
 
     return JSONResponse(

@@ -23,7 +23,9 @@ PORT = 3306
 
 
 SYNC_DATABASE_URL = "mysql+mysqlconnector://academyforumdevdbuser:YLBW7m-Z*!!!@52.1.147.59:3306/dev_academy_db"
-sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)
+# sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)
+sync_engine = create_engine(SYNC_DATABASE_URL)
+
 SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
 

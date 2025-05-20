@@ -4,7 +4,7 @@ from typing import Optional, List
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import String, Integer, DateTime, Text, ForeignKey
+from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -53,9 +53,13 @@ class Test(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     duration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    mark_per_right: Mapped[float] = mapped_column(Float, default=1.00)
+    mark_per_wrong: Mapped[float] = mapped_column(Float, default=1.00)
+
 
     question_paper_id: Mapped[int] = mapped_column(ForeignKey("pts_questionpaper.id"), nullable=False)
     question_paper: Mapped["QuestionPaper"] = relationship("QuestionPaper", back_populates="test")
+
 
 
 
