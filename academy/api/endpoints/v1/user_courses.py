@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Sequence, Tuple
 import asyncio
 from sqlalchemy.future import select
 from config.database import get_sync_db, get_async_db
@@ -15,7 +15,6 @@ import json
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from fastapi import BackgroundTasks
-
 
 
 
@@ -288,6 +287,90 @@ def get_test_user_answer(
 
 
 
+def update_consolidated_rank_from_rows( db,rows: Sequence[Tuple[int, float]]) -> int:
+    if not rows:
+        return 0
+    updates = []
+    curr_rank, count, prev_score = 1, 0, None
+    for uid, score in rows:
+        count += 1
+        if score != prev_score:
+            curr_rank = count
+        updates.append((uid, curr_rank))
+        prev_score = score
+    when_clauses = "\n    ".join(f"WHEN {uid} THEN {rk}" for uid, rk in updates)
+    id_list      = ", ".join(str(uid) for uid, _ in updates)
+    sql = f"""
+        UPDATE user_courses_usertest
+        SET consolidated_rank = CASE id
+            {when_clauses}
+            ELSE consolidated_rank
+        END
+        WHERE id IN ({id_list})
+    """
+    db.execute(text(sql))
+    db.commit()
+    return len(updates)
+
+
+
+
+
+
+
+
+from typing import Sequence, Tuple
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+def update_rank_from_rows( db: Session, rows: Sequence[Tuple[int, float]] ) -> int:
+
+    if not rows:
+        return 0
+
+    # 1) compute (id, rank) pairs
+    updates = []
+    current_rank = 1
+    count = 0
+    previous_score = None
+
+    for user_test_id, score in rows:
+        count += 1
+        if score != previous_score:
+            current_rank = count
+        updates.append((user_test_id, current_rank))
+        previous_score = score
+
+    # 2) build the CASE … WHEN fragment and the IN list
+    when_clauses = "\n        ".join(
+        f"WHEN {uid} THEN {rk}" for uid, rk in updates
+    )
+    id_list = ", ".join(str(uid) for uid, _ in updates)
+
+    # 3) run a single UPDATE … CASE, with backticks around `rank`
+    sql = f"""
+        UPDATE user_courses_usertest
+        SET `rank` = CASE id
+            {when_clauses}
+            ELSE `rank`
+        END
+        WHERE id IN ({id_list})
+    """
+    db.execute(text(sql))
+    db.commit()
+
+    return len(updates)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -314,12 +397,8 @@ def update_user_test(db: Session, ut_ids: list[int],test_id):
     mark_per_right = test._mapping["mark_per_right"]
     mark_per_wrong = test._mapping["mark_per_wrong"]
 
-
-
     if not ut_ids:
         return
-
-
 
     rows = db.execute(
         text(f"""
@@ -378,6 +457,40 @@ def update_user_test(db: Session, ut_ids: list[int],test_id):
 
     db.execute(text(update_query))
     db.commit()
+
+
+
+
+
+
+    rows = db.execute(text("""
+        SELECT id, score
+        FROM user_courses_usertest
+        WHERE test_id = :tid AND test_status = 'completed'
+        ORDER BY score DESC
+    """), {"tid": test_id}).fetchall()
+
+
+    updated_count = update_consolidated_rank_from_rows(db, rows)
+    print("update_consolidated_rank_from_rows",updated_count)
+
+
+    rows = db.execute(text("""
+        SELECT id, score
+        FROM user_courses_usertest
+        WHERE test_id = :tid AND test_status = 'completed' AND answer_mode !='offline'
+        ORDER BY score DESC
+    """), {"tid": test_id}).fetchall()
+
+    updated_count = update_rank_from_rows(db, rows)
+    print("update_rank_from_rows",updated_count)
+
+
+
+
+
+
+
     return len(user_test_ids)
 
 
@@ -495,7 +608,6 @@ async def update_uta_is_correct_by_test(request: Request, background_tasks: Back
 
     question_paper_id = test_row._mapping["question_paper_id"]
 
-    # Add the background task that updates pts_question stats asynchronously
     background_tasks.add_task(update_user_test, db, ut_ids,test_id)
     background_tasks.add_task(update_pts_question_stats, db, question_paper_id)
 
