@@ -286,7 +286,7 @@ def get_test_user_answer(
 
 
 
-@router.post("/update-uta-is-correct-by-test")
+@router.post("/update-rank-n-uta-is-correct-by-test")
 async def update_uta_is_correct_by_test(request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_sync_db), ):
     raw_body = await request.body()
     body = json.loads(raw_body.decode("utf-8"))

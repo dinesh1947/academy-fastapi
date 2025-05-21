@@ -371,6 +371,21 @@ def update_user_test(db: Session, ut_ids: list[int],test_id):
 
 
 
+    rows = db.execute(text("""
+        SELECT id, score
+        FROM user_courses_usertest
+        WHERE test_id = :tid AND test_status = 'completed' AND answer_mode ='offline'
+        ORDER BY score DESC
+    """), {"tid": test_id}).fetchall()
+
+    updated_count = update_rank_from_rows(db, rows)
+    print("update_rank_from_rows",updated_count)
+
+
+
+
+
+
 
 
     return len(user_test_ids)
