@@ -4,16 +4,25 @@ from typing import Optional, List
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, Float
+from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, Float, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
+from sqlalchemy import Enum as SqlEnum
 
-from typing import TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from .UserCourseModel import UserTestAnswer
+
+
+
+# if TYPE_CHECKING:
+#     from .UserModel import User
+
+
 
 
 class Role(PyEnum):
@@ -26,6 +35,7 @@ class Status(PyEnum):
     active = "active"
     inactive = "inactive"
 
+STATUS = ("active", "inactive", "archived")
 
 class TestSeries(Base):
     __tablename__ = 'pts_testseries'
@@ -45,6 +55,21 @@ class TestSeries(Base):
     url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     official_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     test: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now(), nullable=False)
+    status: Mapped[str] = mapped_column(SqlEnum(*STATUS, name="status_enum"), default="active", nullable=False)
+
+
+
+
+
+    # created_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), nullable=True)
+    # updated_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), nullable=True)
+
+    # created_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by_id], backref="testseries_created_by")
+    # updated_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[updated_by_id], backref="testseries_updated_by")
+
+
 
 
 class Test(Base):
