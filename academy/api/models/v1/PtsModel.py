@@ -52,9 +52,8 @@ class TestSeries(Base):
     start_date_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     end_date_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     # image: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    # image: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    image: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
-
+    image: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
 
     url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     official_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
