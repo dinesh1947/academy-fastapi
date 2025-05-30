@@ -16,7 +16,9 @@ import json
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from fastapi import BackgroundTasks
+from urllib.parse import urlencode
 
+from sqlalchemy import bindparam
 
 
 router = APIRouter()
@@ -147,10 +149,30 @@ async def update_uta_is_correct_by_test(request: Request, background_tasks: Back
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @router.get("/pts-list/")
-def admin_read_tests(
+async def admin_read_tests(
     request: Request,
-    db: Session = Depends(get_sync_db),
+    db: AsyncSession = Depends(get_async_db),  # async session
     current_user: dict = Depends(get_current_user),
     page: int = 1,
     page_size: int = 50
@@ -161,37 +183,125 @@ def admin_read_tests(
 
     offset = (page - 1) * page_size
 
-    query = text("""
+    count_query = text("""
+        SELECT COUNT(*) AS total_count
+        FROM user_courses_usercoursepackage AS ucp
+        JOIN users AS u ON u.id = ucp.user_id
+        WHERE ucp.user_id = :user_id
+          AND ucp.test_series_id IS NOT NULL
+          AND ucp.status = 'active'
+          AND u.status = 'active'
+    """)
+
+    count_result = await db.execute(count_query, {"user_id": user_id})
+    total_count = count_result.scalar() or 0
+
+    page_count = (total_count + page_size - 1) // page_size  # ceil division
+
+    main_query = text("""
         SELECT 
             ucp.id AS id,
             ucp.package_id,
             ucp.test_series_id,
             cp.name AS package_name,
-            ucp.show_status
+            ucp.show_status                     
         FROM user_courses_usercoursepackage AS ucp
         LEFT JOIN courses_package AS cp ON cp.id = ucp.package_id
         JOIN users AS u ON u.id = ucp.user_id
         WHERE ucp.user_id = :user_id
-        AND ucp.test_series_id IS NOT NULL
-        AND ucp.status = 'active'
-        AND u.status = 'active'
+          AND ucp.test_series_id IS NOT NULL
+          AND ucp.status = 'active'
+          AND u.status = 'active'
         ORDER BY ucp.id DESC
         LIMIT :limit OFFSET :offset
     """)
 
-    result = db.execute(query, {
+    main_result = await db.execute(main_query, {
         "user_id": user_id,
         "limit": page_size,
         "offset": offset
     })
 
-    rows = result.mappings().all()
-    data = [dict(row) for row in rows]
+    rows = main_result.mappings().all()
+
+    response_list = []
+
+    for row in rows:
+        item = dict(row)
+        package_id = item['package_id']
+
+        test_ids_query = text("""
+            SELECT test_id
+            FROM pts_testpackage
+            WHERE package_id = :package_id
+              AND start_date_time IS NOT NULL
+              AND end_date_time IS NOT NULL
+        """)
+
+        test_ids_result = await db.execute(test_ids_query, {"package_id": package_id})
+        test_ids = [r['test_id'] for r in test_ids_result.mappings().all()]
+
+        item['total_test_count'] = len(test_ids)
+
+        if test_ids:
+            completed_count_query = text("""
+                SELECT COUNT(*) AS completed_count
+                FROM user_courses_usertest
+                WHERE user_id = :user_id
+                  AND test_id IN :test_ids
+                  AND test_status = 'completed'
+            """).bindparams(bindparam("test_ids", expanding=True))
+
+            completed_result = await db.execute(completed_count_query, {
+                "user_id": user_id,
+                "test_ids": test_ids
+            })
+
+            attempt_count = completed_result.scalar() or 0
+        else:
+            attempt_count = 0
+
+        item['attempt_count'] = attempt_count
+
+        response_list.append(item)
+
+
+    base_url = str(request.url).split('?')[0]
+    query_params = dict(request.query_params)
+
+
+    def build_url(page_num: int):
+        params = query_params.copy()
+        params['page'] = page_num
+        return f"{base_url}?{urlencode(params)}"
+
+    next_url = build_url(page + 1) if page < page_count else None
+    prev_url = build_url(page - 1) if page > 1 else None
+    first_page_url = build_url(1) if page_count > 0 else None
+    last_page_url = build_url(page_count) if page_count > 0 else None
+
+    response_data = {
+        "count": total_count,
+        "next": next_url,
+        "previous": prev_url,
+        "first_page": first_page_url,
+        "last_page": last_page_url,
+        "page_count": page_count,
+        "result": response_list,
+    }
 
     return JSONResponse(
-        content={"flag": 1, "message": "Success", "data": data},
+        content={"flag": 1, "message": "Success", "data": response_data},
         status_code=200,
     )
+
+
+
+
+
+
+
+
 
 
 

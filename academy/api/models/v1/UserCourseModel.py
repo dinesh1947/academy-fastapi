@@ -3,7 +3,7 @@
 from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Boolean, DateTime, SmallInteger, UniqueConstraint, ForeignKey, Text
+from sqlalchemy import String, Integer, Boolean, DateTime, SmallInteger, UniqueConstraint, ForeignKey, Text, Float
 
 from .base import Base
 
@@ -45,45 +45,48 @@ class UserCoursePackage(Base):
 
 
 
-
-
 class UserTest(Base):
     __tablename__ = "user_courses_usertest"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(default=None)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
 
-    user_course_package_id: Mapped[int] = mapped_column()
-    test_id: Mapped[int] = mapped_column()
-    question_paper_id: Mapped[Optional[int]] = mapped_column(nullable=True)
+    user_course_package_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    test_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    question_paper_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-    is_agree: Mapped[bool] = mapped_column(default=False)
-    correct_answer: Mapped[int] = mapped_column(default=0)
-    incorrect_answer: Mapped[int] = mapped_column(default=0)
-    not_answer: Mapped[int] = mapped_column(default=0)
-    time_spent: Mapped[int] = mapped_column(default=0)
+    is_agree: Mapped[bool] = mapped_column(Boolean, default=False)
+    correct_answer: Mapped[int] = mapped_column(Integer, default=0)
+    incorrect_answer: Mapped[int] = mapped_column(Integer, default=0)
+    not_answer: Mapped[int] = mapped_column(Integer, default=0)
+    time_spent: Mapped[int] = mapped_column(Integer, default=0)
 
-    score: Mapped[Optional[float]] = mapped_column(default=None)
-    rank: Mapped[Optional[int]] = mapped_column(nullable=True)
-    consolidated_rank: Mapped[Optional[int]] = mapped_column(nullable=True)
+    score: Mapped[Optional[float]] = mapped_column(Float, default=None)
+    rank: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    consolidated_rank: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-    test_status: Mapped[str] = mapped_column(String, default="start")
-    answer_mode: Mapped[str] = mapped_column(String, default="web")
+    test_status: Mapped[str] = mapped_column(String(50), default="start")
+    answer_mode: Mapped[str] = mapped_column(String(50), default="web")
 
-    start_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
-    end_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    start_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    end_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
-    restart_number: Mapped[int] = mapped_column(default=0)
-    language: Mapped[str] = mapped_column(String, default="")
-    test_type: Mapped[str] = mapped_column(String, default="pts")
+    restart_number: Mapped[int] = mapped_column(Integer, default=0)
+    language: Mapped[str] = mapped_column(String(50), default="")
+    test_type: Mapped[str] = mapped_column(String(50), default="pts")
 
-    # Use string reference here to avoid import loop
+    # Use string reference to avoid circular import
     answers: Mapped[List["UserTestAnswer"]] = relationship(
         "UserTestAnswer",
         back_populates="user_test",
         cascade="all, delete-orphan"
     )
+
+
+
+
 
 
 class UserTestAnswer(Base):

@@ -90,6 +90,16 @@ class Test(Base):
 
 
 
+class TestPackage(Base):
+    __tablename__ = "pts_testpackage"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    test_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    package_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    start_date_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    end_date_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+
 
 class QuestionPaper(Base):
     __tablename__ = 'pts_questionpaper'
