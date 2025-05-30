@@ -139,3 +139,61 @@ async def update_uta_is_correct_by_test(request: Request, background_tasks: Back
     )
 
 
+
+
+
+
+
+
+
+
+@router.get("/pts-list/")
+def admin_read_tests(
+    request: Request,
+    db: Session = Depends(get_sync_db),
+    current_user: dict = Depends(get_current_user),
+    page: int = 1,
+    page_size: int = 10
+):
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID not found")
+
+    offset = (page - 1) * page_size
+
+    query = text("""
+        SELECT 
+            ucp.id AS id,
+            ucp.package_id,
+            ucp.test_series_id,
+            cp.name AS package_name,
+            ucp.show_status
+        FROM user_courses_usercoursepackage AS ucp
+        LEFT JOIN courses_package AS cp ON cp.id = ucp.package_id
+        JOIN users AS u ON u.id = ucp.user_id
+        WHERE ucp.user_id = :user_id
+        AND ucp.test_series_id IS NOT NULL
+        AND ucp.status = 'active'
+        AND u.status = 'active'
+        ORDER BY ucp.id DESC
+        LIMIT :limit OFFSET :offset
+    """)
+
+    result = db.execute(query, {
+        "user_id": user_id,
+        "limit": page_size,
+        "offset": offset
+    })
+
+    rows = result.mappings().all()
+    data = [dict(row) for row in rows]
+
+    return JSONResponse(
+        content={"flag": 1, "message": "Success", "data": data},
+        status_code=200,
+    )
+
+
+
+
+

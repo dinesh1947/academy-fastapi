@@ -3,12 +3,48 @@
 from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Boolean, DateTime, SmallInteger, UniqueConstraint, ForeignKey
+from sqlalchemy import String, Integer, Boolean, DateTime, SmallInteger, UniqueConstraint, ForeignKey, Text
 
 from .base import Base
 
 if TYPE_CHECKING:
     from .PtsModel import Question  # for type hint only
+
+
+
+
+
+
+
+
+
+
+class UserCoursePackage(Base):
+    __tablename__ = 'user_courses_usercoursepackage'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, nullable=False)
+    test_series_id: Mapped[int | None] = mapped_column(Integer, nullable=False)
+    course_id: Mapped[int | None] = mapped_column(Integer, nullable=False)
+    package_id: Mapped[int | None] = mapped_column(Integer, nullable=False)
+    mts_id: Mapped[int | None] = mapped_column(Integer, nullable=False)
+    added_by: Mapped[str | None] = mapped_column(String(255), nullable=True, default="Online")
+    source: Mapped[str | None] = mapped_column(String(255), nullable=True, default="admin panel")
+    rating: Mapped[int] = mapped_column(Integer, default=0)
+    review_title: Mapped[str | None] = mapped_column(String(25), nullable=True, default='')
+    review: Mapped[str | None] = mapped_column(Text, nullable=True, default='')
+    show_status: Mapped[str | None] = mapped_column(String(250), nullable=True, default="start")
+    is_recommended: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+
+
+
+
+
+
+
+
+
 
 
 class UserTest(Base):
