@@ -33,15 +33,12 @@ SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_eng
 
 
 def get_sync_db():
-    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
     db = SyncSessionLocal()
     try:
-        # Test the database connection by performing a simple query
-        db.execute(text("SELECT 1"))  # Wrap the SQL query in `text()`
-        print("Database connection successfulZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZzz")
+        # db.execute(text("SELECT 1"))  
         yield db
     except SQLAlchemyError as e:
-        print(f"Database connection failed>>>>>>>>>>>>>>>>: {e}")
+        # print(f"Database connection failed>>>>>>>>>>>>>>>>: {e}")
         raise Exception("Database connection failed") from e
     finally:
         db.close()
