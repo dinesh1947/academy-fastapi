@@ -153,7 +153,7 @@ def admin_read_tests(
     db: Session = Depends(get_sync_db),
     current_user: dict = Depends(get_current_user),
     page: int = 1,
-    page_size: int = 10
+    page_size: int = 50
 ):
     user_id = current_user.get("id")
     if not user_id:
