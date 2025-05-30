@@ -19,7 +19,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
-from exception_handlers import jwt_expired_handler, jwt_invalid_token_handler, global_exception_handler,not_authenticated_handler
+from exception_handlers import *
 app = FastAPI()
 app.include_router(v1_router , prefix="/api")
 
@@ -27,23 +27,12 @@ app.add_exception_handler(jwt.ExpiredSignatureError, jwt_expired_handler)
 app.add_exception_handler(jwt.InvalidTokenError, jwt_invalid_token_handler)
 app.add_exception_handler(HTTPException, not_authenticated_handler)  # Handle Not Authenticated
 app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(StarletteHTTPException, custom_404_handler)
 
 
 
 
 
-@app.exception_handler(StarletteHTTPException)
-async def custom_404_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 404:
-        return JSONResponse(
-            status_code=404,
-            content={"flag":0,"detail": "No page exists for the requested API endpoint.", "data":{}}
-        )
-    # For other HTTP exceptions, you can fallback to default handler or re-raise
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
 
 
 
