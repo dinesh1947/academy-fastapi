@@ -3,6 +3,7 @@ from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session,Query
 from sqlalchemy import func
 from pydantic import BaseModel
+from urllib.parse import urlencode
 
 
 
@@ -40,7 +41,7 @@ def paginate_query(
     page_size: int
 ) -> PaginatedResponse[T]:
     offset = (page - 1) * page_size
-    total_count = query.order_by(None).count()  # `order_by(None)` avoids unnecessary ORDER BY in count
+    total_count = query.order_by(None).count()  
 
     results = query.offset(offset).limit(page_size).all()
     base_url = str(request.url).split('?')[0]
@@ -57,3 +58,31 @@ def paginate_query(
         previous=f"{base_url}?page={page - 1}&page_size={page_size}" if page > 1 else None,
         results=[schema.from_orm(obj) for obj in results]
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+def build_pagination_urls(request: Request, page: int, page_count: int) -> dict:
+    base_url = str(request.url).split('?')[0]
+    query_params = dict(request.query_params)
+
+    def build_url(page_num: int):
+        params = query_params.copy()
+        params['page'] = page_num
+        return f"{base_url}?{urlencode(params)}"
+
+    return {
+        "next": build_url(page + 1) if page < page_count else None,
+        "previous": build_url(page - 1) if page > 1 else None,
+        "first_page": build_url(1) if page_count > 0 else None,
+        "last_page": build_url(page_count) if page_count > 0 else None,
+    }

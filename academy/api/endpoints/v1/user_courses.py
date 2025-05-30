@@ -270,23 +270,14 @@ async def admin_read_tests(
     query_params = dict(request.query_params)
 
 
-    def build_url(page_num: int):
-        params = query_params.copy()
-        params['page'] = page_num
-        return f"{base_url}?{urlencode(params)}"
+    pagination_urls = build_pagination_urls(request, page, page_count)
 
-    next_url = build_url(page + 1) if page < page_count else None
-    prev_url = build_url(page - 1) if page > 1 else None
-    first_page_url = build_url(1) if page_count > 0 else None
-    last_page_url = build_url(page_count) if page_count > 0 else None
+
 
     response_data = {
         "count": total_count,
-        "next": next_url,
-        "previous": prev_url,
-        "first_page": first_page_url,
-        "last_page": last_page_url,
         "page_count": page_count,
+        **pagination_urls,
         "result": response_list,
     }
 
