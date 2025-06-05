@@ -21,7 +21,387 @@ from urllib.parse import urlencode
 from sqlalchemy import bindparam
 
 
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+
+
 router = APIRouter()
+
+
+
+
+
+
+
+
+@router.get("/list/")
+def admin_read_tests(request: Request,db: Session = Depends(get_sync_db),current_user: dict = Depends(get_current_user),page: int = 1,page_size: int = 10):
+    user_id = current_user.get("id")
+    offset = (page - 1) * page_size
+
+    count_query = text("""
+        SELECT COUNT(*) FROM user_courses_usercoursepackage AS ucp
+        JOIN users AS u ON u.id = ucp.user_id
+        WHERE ucp.user_id = :user_id
+        AND ucp.course_id IS NOT NULL
+        AND ucp.status = 'active'
+        AND u.status = 'active'
+    """)
+    count = db.execute(count_query, {"user_id": user_id}).scalar()
+
+    page_count = (count + page_size - 1)//page_size 
+
+
+    query = text("""
+        SELECT 
+            ucp.id AS id,
+            ucp.package_id,
+            ucp.course_id,
+            cp.name AS package_name,
+            cc.title AS course_name,
+            ucp.show_status
+        FROM user_courses_usercoursepackage AS ucp
+        LEFT JOIN courses_package AS cp ON cp.id = ucp.package_id
+        LEFT JOIN courses_course AS cc ON cc.id = ucp.course_id
+        JOIN users AS u ON u.id = ucp.user_id
+        WHERE ucp.user_id = :user_id
+        AND ucp.course_id IS NOT NULL
+        AND ucp.status = 'active'
+        AND u.status = 'active'
+        ORDER BY ucp.id DESC
+        LIMIT :limit OFFSET :offset
+    """)
+
+    result = db.execute(query, { "user_id": user_id, "limit": page_size, "offset": offset})
+
+    rows = result.mappings().all()
+    results = [dict(row) for row in rows]
+    
+
+    pagination_urls = build_pagination_urls(request, page, page_count)
+
+
+    data= { "count": count, "current_page": page,"page_size": page_size, "page_count": page_count, **pagination_urls }
+
+    data['results']=results
+
+    content={ "flag": 1, "message": "Success", "data": data, }
+
+
+
+    return JSONResponse(status_code=200, content=content)
+
+
+
+
+
+
+
+
+
+
+
+
+
+@router.get("/pts-list/")
+async def admin_read_tests(
+    request: Request,
+    db: AsyncSession = Depends(get_async_db), 
+    current_user: dict = Depends(get_current_user),
+    page: int = 1,
+    page_size: int = 50
+):
+    user_id = current_user.get("id")
+   
+
+    offset = (page - 1) * page_size
+
+    count_query = text("""
+        SELECT COUNT(*) AS total_count
+        FROM user_courses_usercoursepackage AS ucp
+        JOIN users AS u ON u.id = ucp.user_id
+        WHERE ucp.user_id = :user_id
+          AND ucp.test_series_id IS NOT NULL
+          AND ucp.status = 'active'
+          AND u.status = 'active'
+    """)
+
+    count_result = await db.execute(count_query, {"user_id": user_id})
+    count = count_result.scalar() or 0
+
+    page_count = (count + page_size - 1) // page_size  # ceil division
+
+    main_query = text("""
+        SELECT 
+            ucp.id AS id,
+            ucp.package_id,
+            ucp.test_series_id,
+            cp.name AS package_name,
+            ucp.show_status                     
+        FROM user_courses_usercoursepackage AS ucp
+        LEFT JOIN courses_package AS cp ON cp.id = ucp.package_id
+        JOIN users AS u ON u.id = ucp.user_id
+        WHERE ucp.user_id = :user_id
+          AND ucp.test_series_id IS NOT NULL
+          AND ucp.status = 'active'
+          AND u.status = 'active'
+        ORDER BY ucp.id DESC
+        LIMIT :limit OFFSET :offset
+    """)
+
+    main_result = await db.execute(main_query, {
+        "user_id": user_id,
+        "limit": page_size,
+        "offset": offset
+    })
+
+    rows = main_result.mappings().all()
+
+    response_list = []
+
+    for row in rows:
+        item = dict(row)
+        package_id = item['package_id']
+
+        test_ids_query = text("""
+            SELECT test_id
+            FROM pts_testpackage
+            WHERE package_id = :package_id
+              AND start_date_time IS NOT NULL
+              AND end_date_time IS NOT NULL
+        """)
+
+        test_ids_result = await db.execute(test_ids_query, {"package_id": package_id})
+        test_ids = [r['test_id'] for r in test_ids_result.mappings().all()]
+
+        item['total_test_count'] = len(test_ids)
+
+        if test_ids:
+            completed_count_query = text("""
+                SELECT COUNT(*) AS completed_count
+                FROM user_courses_usertest
+                WHERE user_id = :user_id
+                  AND test_id IN :test_ids
+                  AND test_status = 'completed'
+            """).bindparams(bindparam("test_ids", expanding=True))
+
+            completed_result = await db.execute(completed_count_query, {
+                "user_id": user_id,
+                "test_ids": test_ids
+            })
+
+            attempt_count = completed_result.scalar() or 0
+        else:
+            attempt_count = 0
+
+        item['attempt_count'] = attempt_count
+        if attempt_count == 0:
+            item['show_status']="start"
+        elif attempt_count==item['total_test_count']:
+            item['show_status']="completed"
+        else:
+            item['show_status']="continue"
+        
+
+        response_list.append(item)
+
+
+
+    pagination_urls = build_pagination_urls(request, page, page_count)
+    data= { "current_page": page,"page_size": page_size, "count": count, "page_count": page_count, **pagination_urls }
+    data['results'] = response_list
+    content={ "flag": 1, "message": "Success", "data": data }
+    return JSONResponse(status_code=200, content=content)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@router.get("/start-upcoming-resume/")
+async def admin_read_tests(
+    request: Request,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user),
+    ucp_id: int = None,
+    page: int = 1,
+    page_size: int = 10
+):
+    try:
+        
+        if not ucp_id:
+            raise HTTPException(status_code=400, detail="Invalid or missing ucp_id.")
+        
+        user_id = current_user.get("id")
+        current_time = datetime.utcnow().replace(tzinfo=ZoneInfo("UTC"))
+        indian_tz = ZoneInfo("Asia/Kolkata")
+
+        # First, validate UserCoursePackage
+        result = await db.execute(text("""
+            SELECT ucp.*, p.name as package_name
+            FROM user_courses_usercoursepackage ucp
+            JOIN courses_package p ON ucp.package_id = p.id
+            WHERE ucp.id = :ucp_id AND ucp.user_id = :user_id AND ucp.status = 'active'
+        """), {"ucp_id": ucp_id, "user_id": user_id})
+        
+        ucp_data = result.fetchone()
+        if not ucp_data:
+            raise HTTPException(status_code=404, detail="UserCoursePackage not found.")
+        
+        package_name = ucp_data.package_name
+
+        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK")
+        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",ucp_data)
+        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",ucp_id)
+        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",package_name)
+        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",current_time)
+
+        result = await db.execute(text("""
+            SELECT
+                UCP.user_id,
+                TP.test_id AS id,
+                TP.start_date_time,
+                TP.end_date_time,
+                T.name,
+                T.total_question,
+                T.duration,
+                T.schedule_date_time,
+                UT.id AS user_test__id,
+                UT.is_agree,
+                UT.language,
+                UT.test_status,
+                UT.test_type,
+                UT.answer_mode
+            FROM user_courses_usercoursepackage AS UCP
+            INNER JOIN pts_testpackage AS TP ON TP.package_id = UCP.package_id
+            INNER JOIN pts_test AS T ON T.id = TP.test_id
+            LEFT JOIN user_courses_usertest AS UT 
+                ON UT.test_id = T.id 
+                AND UT.user_id = UCP.user_id 
+                AND UT.test_type = 'pts'
+            WHERE
+                UCP.id = :ucp_id
+                AND T.is_quiz = FALSE
+                AND TP.start_date_time IS NOT NULL
+                AND TP.end_date_time IS NOT NULL
+               
+                AND (UT.test_status != 'completed' OR UT.test_status IS NULL)
+            ORDER BY TP.start_date_time DESC
+        """), {"ucp_id": ucp_id})
+
+        rows = result.fetchall()
+        columns = result.keys()
+        all_results = [dict(zip(columns, row)) for row in rows]
+
+        print("all_results",all_results)
+
+        # Manual pagination
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_results = all_results[start_idx:end_idx]
+
+        upcoming, resume, start = [], [], []
+
+
+        for i in paginated_results:
+            print("LLLLLLLLLLLLLLLLLLLLL")
+            print(i)
+            i['start_date_time'] = i['start_date_time'].astimezone(indian_tz)
+            i['end_date_time'] = i['end_date_time'].astimezone(indian_tz)
+            i["before_show"] = 0
+
+            if i['schedule_date_time']:
+                i['schedule_date_time'] = i['schedule_date_time'].astimezone(indian_tz)
+                i["result_type"] = "scheduled" if i['schedule_date_time'] > current_time else "instant"
+            else:
+                i["result_type"] = "instant"
+
+            if i['start_date_time'] <= current_time:
+                if not i['user_test__id']:
+                    i['test_status'] = 'start'
+                    start.append(i)
+                else:
+                    if i.get('is_agree') and i.get('language') in ["hindi", "english"]:
+                        i['test_status'] = 'resume'
+                        resume.append(i)
+                    else:
+                        i['test_status'] = 'start'
+                        start.append(i)
+            else:
+                i['test_status'] = 'upcoming'
+                future_time = current_time + timedelta(minutes=6)
+                if future_time > i['start_date_time']:
+                    i["before_show"] = 1
+                upcoming.append(i)
+
+        combined_results = upcoming + resume + start
+        print("#########################################")
+        for item in combined_results:
+            for key, value in item.items():
+                if isinstance(value, datetime):
+                    item[key] = value.isoformat()
+
+        # Return JSON response
+        return JSONResponse(
+            status_code=200,
+            content={
+                "flag": 1,
+                "message": "Record fetched successfully.",
+                "data": {
+                    "results": combined_results,
+                    "page": page,
+                    "page_size": page_size,
+                    "total": len(all_results)
+                },
+                "package_name": package_name
+            }
+        )
+
+
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "flag": 0,
+                "message": f"Something went wrong - {str(e)}",
+                "data": {}
+            }
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -165,126 +545,6 @@ async def update_uta_is_correct_by_test(request: Request, background_tasks: Back
 
 
 
-
-
-
-
-@router.get("/pts-list/")
-async def admin_read_tests(
-    request: Request,
-    db: AsyncSession = Depends(get_async_db),  # async session
-    current_user: dict = Depends(get_current_user),
-    page: int = 1,
-    page_size: int = 50
-):
-    user_id = current_user.get("id")
-    if not user_id:
-        raise HTTPException(status_code=400, detail="User ID not found")
-
-    offset = (page - 1) * page_size
-
-    count_query = text("""
-        SELECT COUNT(*) AS total_count
-        FROM user_courses_usercoursepackage AS ucp
-        JOIN users AS u ON u.id = ucp.user_id
-        WHERE ucp.user_id = :user_id
-          AND ucp.test_series_id IS NOT NULL
-          AND ucp.status = 'active'
-          AND u.status = 'active'
-    """)
-
-    count_result = await db.execute(count_query, {"user_id": user_id})
-    total_count = count_result.scalar() or 0
-
-    page_count = (total_count + page_size - 1) // page_size  # ceil division
-
-    main_query = text("""
-        SELECT 
-            ucp.id AS id,
-            ucp.package_id,
-            ucp.test_series_id,
-            cp.name AS package_name,
-            ucp.show_status                     
-        FROM user_courses_usercoursepackage AS ucp
-        LEFT JOIN courses_package AS cp ON cp.id = ucp.package_id
-        JOIN users AS u ON u.id = ucp.user_id
-        WHERE ucp.user_id = :user_id
-          AND ucp.test_series_id IS NOT NULL
-          AND ucp.status = 'active'
-          AND u.status = 'active'
-        ORDER BY ucp.id DESC
-        LIMIT :limit OFFSET :offset
-    """)
-
-    main_result = await db.execute(main_query, {
-        "user_id": user_id,
-        "limit": page_size,
-        "offset": offset
-    })
-
-    rows = main_result.mappings().all()
-
-    response_list = []
-
-    for row in rows:
-        item = dict(row)
-        package_id = item['package_id']
-
-        test_ids_query = text("""
-            SELECT test_id
-            FROM pts_testpackage
-            WHERE package_id = :package_id
-              AND start_date_time IS NOT NULL
-              AND end_date_time IS NOT NULL
-        """)
-
-        test_ids_result = await db.execute(test_ids_query, {"package_id": package_id})
-        test_ids = [r['test_id'] for r in test_ids_result.mappings().all()]
-
-        item['total_test_count'] = len(test_ids)
-
-        if test_ids:
-            completed_count_query = text("""
-                SELECT COUNT(*) AS completed_count
-                FROM user_courses_usertest
-                WHERE user_id = :user_id
-                  AND test_id IN :test_ids
-                  AND test_status = 'completed'
-            """).bindparams(bindparam("test_ids", expanding=True))
-
-            completed_result = await db.execute(completed_count_query, {
-                "user_id": user_id,
-                "test_ids": test_ids
-            })
-
-            attempt_count = completed_result.scalar() or 0
-        else:
-            attempt_count = 0
-
-        item['attempt_count'] = attempt_count
-
-        response_list.append(item)
-
-
-    base_url = str(request.url).split('?')[0]
-    query_params = dict(request.query_params)
-
-
-    pagination_urls = build_pagination_urls(request, page, page_count)
-
-
-
-    response_data = {
-        "count": total_count,
-        "page_count": page_count,
-        **pagination_urls,
-        "result": response_list,
-    }
-
-    return JSONResponse(
-        content={"flag": 1, "message": "Success", "data": response_data},
-        status_code=200,
-    )
 
 
 

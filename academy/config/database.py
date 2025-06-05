@@ -1,44 +1,26 @@
-# database.py
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.declarative import declarative_base
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 from sqlalchemy.orm import sessionmaker
-from databases import Database
-from urllib.parse import quote
 from sqlalchemy.exc import SQLAlchemyError
-from contextlib import contextmanager
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
-# Database configuration
-DB_NAME = "dev_academy_db"
-DB_USER = "academyforumdevdbuser"
-PASSWORD = quote("YLBW7m-Z*!!!")  # Escaping special characters
-HOST = "52.1.147.59"
-PORT = 3306
 
 
-# ASYNC_DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{PASSWORD}@{HOST}:{PORT}/{DB_NAME}"
-# async_database = Database(ASYNC_DATABASE_URL)
+SYNC_DATABASE_URL = os.getenv("SYNC_DATABASE_URL")
+ASYNC_DATABASE_URL = os.getenv("ASYNC_DATABASE_URL")
 
 
-
-
-SYNC_DATABASE_URL = "mysql+mysqlconnector://academyforumdevdbuser:YLBW7m-Z*!!!@52.1.147.59:3306/dev_academy_db"
-# sync_engine = create_engine(SYNC_DATABASE_URL, echo=True)
 sync_engine = create_engine(SYNC_DATABASE_URL)
-
 SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
-
-
-
-
 
 def get_sync_db():
     db = SyncSessionLocal()
     try:
-        # db.execute(text("SELECT 1"))  
         yield db
     except SQLAlchemyError as e:
-        # print(f"Database connection failed>>>>>>>>>>>>>>>>: {e}")
         raise Exception("Database connection failed") from e
     finally:
         db.close()
@@ -46,21 +28,8 @@ def get_sync_db():
 
 
 
-
-ASYNC_DATABASE_URL = "mysql+asyncmy://academyforumdevdbuser:YLBW7m-Z*!!!@52.1.147.59:3306/dev_academy_db"
-
-# Create an async engine
 async_engine = create_async_engine(ASYNC_DATABASE_URL, echo=False)
-
-# Async sessionmaker
-AsyncSessionLocal = sessionmaker(
-    bind=async_engine,
-    class_=AsyncSession,
-    autocommit=False,
-    autoflush=False,
-)
-
-
+AsyncSessionLocal = sessionmaker( autoflush=False,  autocommit=False, bind=async_engine, class_=AsyncSession,)
 
 async def get_async_db():
     async with AsyncSessionLocal() as db:

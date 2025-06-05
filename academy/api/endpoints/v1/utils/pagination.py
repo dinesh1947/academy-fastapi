@@ -4,13 +4,19 @@ from sqlalchemy.orm import Session,Query
 from sqlalchemy import func
 from pydantic import BaseModel
 from urllib.parse import urlencode
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 
 from typing import Generic, List, Optional, TypeVar
 from pydantic.generics import GenericModel
 
 
+
+
+BASE_URL = os.getenv("BASE_URL")
 
 
 
@@ -44,7 +50,7 @@ def paginate_query(
     total_count = query.order_by(None).count()  
 
     results = query.offset(offset).limit(page_size).all()
-    base_url = str(request.url).split('?')[0]
+    base_url = BASE_URL
     total_pages = (total_count + page_size - 1) // page_size
 
     return PaginatedResponse[T](
