@@ -25,6 +25,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 
+# Refresh token: Longer-lived (e.g., 7 or 30 days)
+def create_refresh_token(data: dict, expires_delta: timedelta = timedelta(days=30)):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire, "token_type": "refresh"})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 
 # Function to create a JWT token
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=10000)):
