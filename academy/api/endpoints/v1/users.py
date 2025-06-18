@@ -57,46 +57,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 
-# @router.post("/login", response_model=Token)
-# async def login(user: UserModel, db: Session = Depends(get_sync_db)):
-#     # Fetch the user from DB using plain mobile number
-#     db_user = db.query(User).filter(User.mobile == user.mobile).first()
-#     hashed_password = hashlib.md5(user.password.encode()).hexdigest()
-#     if not db_user or hashed_password != db_user.password:
-#         raise HTTPException(status_code=401, detail="Invalid credentials")
-#     access_token = create_access_token()
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-
-
-#     return JSONResponse(
-#         status_code=200,
-#         content={
-#             "flag": 1,
-#             "message": f"Something went wrong - {str(e)}",
-#             "data": {}
-#         }
-#     )
-
-
-
 
 
 @router.post("/login")
 async def login(user: UserModel, db: Session = Depends(get_sync_db)):
     try:
-        # Fetch the user from DB using plain mobile number
         db_user = db.query(User).filter(User.mobile == user.mobile).first()
         hashed_password = hashlib.md5(user.password.encode()).hexdigest()
 
         if not db_user or hashed_password != db_user.password:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        # Create both tokens
-
-
-        data={
-                "id": db_user.id,  
+        data={   "id": db_user.id,  
                 "username": db_user.username,  
                 "full_name": db_user.full_name,  
                 "mobile": db_user.mobile,  
@@ -105,25 +77,15 @@ async def login(user: UserModel, db: Session = Depends(get_sync_db)):
             }
 
 
-
-        refresh_token = create_refresh_token(data={"user_id": db_user.id})
+        refresh_token = create_refresh_token(data=data)
         access_token = create_access_token(data=data)
-        print("****************************************")
 
         return JSONResponse(
             status_code=200,
             content={
                 "flag": 1,
                 "message": "Logged in successfully",
-                "payload": {
-                    "id": db_user.id,
-                    "user_name": db_user.username,
-                    "full_name": db_user.full_name,
-                    "email": db_user.email,
-                    "mobile": db_user.mobile,
-                    "role": db_user.role.value,
-                    "rollnumber": db_user.rollnumber
-                },
+                "payload": data,
                 "token": {
                     "refresh": refresh_token,
                     "access": access_token
@@ -132,15 +94,7 @@ async def login(user: UserModel, db: Session = Depends(get_sync_db)):
         )
 
     except Exception as e:         
-        print(e)
-        return JSONResponse(
-            status_code=500,
-            content={
-                "flag": 0,
-                "message": f"Something went wrong - {str(e)}",
-                "data": {}
-            }
-        )
+        return JSONResponse( status_code=500, content={ "flag": 0, "message": f"Something went wrong - {str(e)}", "data": {} })
 
 
 
