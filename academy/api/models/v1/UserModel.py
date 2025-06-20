@@ -40,6 +40,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.student, nullable=False)
+    status: Mapped[int] = mapped_column(nullable=False)
 
 
 class RegistrationMailLog(Base):

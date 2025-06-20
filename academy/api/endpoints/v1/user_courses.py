@@ -116,7 +116,6 @@ async def admin_read_tests(
    
 
     offset = (page - 1) * page_size
-
     count_query = text("""
         SELECT COUNT(*) AS total_count
         FROM user_courses_usercoursepackage AS ucp
@@ -129,8 +128,9 @@ async def admin_read_tests(
 
     count_result = await db.execute(count_query, {"user_id": user_id})
     count = count_result.scalar() or 0
+    page_count = (count + page_size - 1) // page_size  
 
-    page_count = (count + page_size - 1) // page_size  # ceil division
+
 
     main_query = text("""
         SELECT 
@@ -157,7 +157,6 @@ async def admin_read_tests(
     })
 
     rows = main_result.mappings().all()
-
     response_list = []
 
     for row in rows:
@@ -203,7 +202,6 @@ async def admin_read_tests(
         else:
             item['show_status']="continue"
         
-
         response_list.append(item)
 
 
@@ -240,7 +238,6 @@ async def admin_read_tests(
     page_size: int = 10
 ):
     try:
-        
         if not ucp_id:
             raise HTTPException(status_code=400, detail="Invalid or missing ucp_id.")
         
@@ -248,7 +245,6 @@ async def admin_read_tests(
         current_time = datetime.utcnow().replace(tzinfo=ZoneInfo("UTC"))
         indian_tz = ZoneInfo("Asia/Kolkata")
 
-        # First, validate UserCoursePackage
         result = await db.execute(text("""
             SELECT ucp.*, p.name as package_name
             FROM user_courses_usercoursepackage ucp
@@ -258,15 +254,11 @@ async def admin_read_tests(
         
         ucp_data = result.fetchone()
         if not ucp_data:
-            raise HTTPException(status_code=404, detail="UserCoursePackage not found.")
+            return JSONResponse( status_code=200, content={"flag": 0, "message": "No record Found", "data": {}})
+            
         
         package_name = ucp_data.package_name
 
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK")
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",ucp_data)
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",ucp_id)
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",package_name)
-        print("KKKKKKKKKKKKKKKKKKKKKKKKKKK",current_time)
 
         result = await db.execute(text("""
             SELECT
@@ -304,20 +296,19 @@ async def admin_read_tests(
         rows = result.fetchall()
         columns = result.keys()
         all_results = [dict(zip(columns, row)) for row in rows]
+        total = len(all_results)
+        page_count = (total + page_size - 1) // page_size
 
-        print("all_results",all_results)
-
-        # Manual pagination
         start_idx = (page - 1) * page_size
         end_idx = start_idx + page_size
         paginated_results = all_results[start_idx:end_idx]
 
         upcoming, resume, start = [], [], []
+        pagination_urls = build_pagination_urls(request, page, page_count)
 
 
         for i in paginated_results:
-            print("LLLLLLLLLLLLLLLLLLLLL")
-            print(i)
+          
             i['start_date_time'] = i['start_date_time'].astimezone(indian_tz)
             i['end_date_time'] = i['end_date_time'].astimezone(indian_tz)
             i["before_show"] = 0
@@ -347,7 +338,6 @@ async def admin_read_tests(
                 upcoming.append(i)
 
         combined_results = upcoming + resume + start
-        print("#########################################")
         for item in combined_results:
             for key, value in item.items():
                 if isinstance(value, datetime):
@@ -360,10 +350,12 @@ async def admin_read_tests(
                 "flag": 1,
                 "message": "Record fetched successfully.",
                 "data": {
-                    "results": combined_results,
-                    "page": page,
+                    "current_page": page,
                     "page_size": page_size,
-                    "total": len(all_results)
+                    "count": total,
+                    "page_count": page_count,
+                    **pagination_urls,
+                    "results": combined_results
                 },
                 "package_name": package_name
             }

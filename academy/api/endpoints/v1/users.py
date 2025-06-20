@@ -62,7 +62,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 @router.post("/login")
 async def login(user: UserModel, db: Session = Depends(get_sync_db)):
     try:
-        db_user = db.query(User).filter(User.mobile == user.mobile).first()
+        db_user = db.query(User).filter(User.mobile == user.mobile, User.status == 'active').first()
         hashed_password = hashlib.md5(user.password.encode()).hexdigest()
 
         if not db_user or hashed_password != db_user.password:
