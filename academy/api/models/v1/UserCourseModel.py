@@ -77,15 +77,6 @@ class UserTest(Base):
     language: Mapped[str] = mapped_column(String(50), default="")
     test_type: Mapped[str] = mapped_column(String(50), default="pts")
 
-    # Use string reference to avoid circular import
-    answers: Mapped[List["UserTestAnswer"]] = relationship(
-        "UserTestAnswer",
-        back_populates="user_test",
-        cascade="all, delete-orphan"
-    )
-
-
-
 
 
 
@@ -106,7 +97,5 @@ class UserTestAnswer(Base):
     how_sure: Mapped[Optional[str]] = mapped_column(String(4), nullable=True)
 
     user_test_id: Mapped[int] = mapped_column(ForeignKey("user_courses_usertest.id", ondelete="CASCADE"), nullable=False)
-    user_test: Mapped["UserTest"] = relationship("UserTest", back_populates="answers")
 
     question_id: Mapped[Optional[int]] = mapped_column(ForeignKey("pts_question.id", ondelete="SET NULL"))
-    question: Mapped[Optional["Question"]] = relationship("Question", back_populates="user_test_answers")

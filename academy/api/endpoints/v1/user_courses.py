@@ -523,6 +523,7 @@ async def start_test(
     current_user: dict = Depends(get_current_user),
 ):
     print("####################################################################################################")
+    data ={}
     print(current_user)
 
     user_id = current_user.get("id")
@@ -587,7 +588,33 @@ async def start_test(
         created = True
 
 
-    data = {"created":created}
+    if created:
+        data["remaining_time"] =test.duration*60
+        pass
+    else:
+        print(user_test.time_spent)
+        print(tp.end_date_time)
+        print(tp.end_date_time-datetime.utcnow())
+        left_duration = int((tp.end_date_time-datetime.utcnow()).total_seconds())
+        print(left_duration)
+
+        if left_duration <=0:
+
+            return JSONResponse(
+                content={"flag": 1, "message": "Time Up", "data": {}},
+                status_code=200,
+            )
+
+
+
+
+
+        remaining_time = test.duration*60 - user_test.time_spent
+        data["remaining_time"] = min(remaining_time,left_duration)
+
+
+    data["duration"] = test.duration
+
 
     print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
     print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
@@ -606,10 +633,24 @@ async def start_test(
     )
 
     result = await db.execute(stmt)
-    languages = result.scalars().all()
-    language_values = [lang.value for lang in languages if lang is not None]
+    language_result = result.scalars().all()
+    language = [lang.value for lang in language_result if lang is not None]
 
-    print(language_values)
+
+
+
+
+
+
+    data["duration"] = test.duration
+    data["user_test_id"] = user_test.id
+    data["name"] = test.name
+    data["instruction"] = test.instruction
+    data["hindi_instruction"] = test.hindi_instruction
+    data["name"] = test.name
+    data["language"] = language
+    data["maximum_marks"] = test.mark_per_right*test.total_question
+
 
 
     return JSONResponse(

@@ -87,16 +87,45 @@ class TestSeries(Base):
 
 
 
+
+
 class Test(Base):
     __tablename__ = 'pts_test'
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    duration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    code: Mapped[str] = mapped_column(String(40), unique=True)
+
+    question_paper_id: Mapped[Optional[int]] = mapped_column(ForeignKey("pts_questionpaper.id"), nullable=True)
+
+    instruction: Mapped[Optional[str]] = mapped_column(Text, default='', nullable=True)
+    hindi_instruction: Mapped[Optional[str]] = mapped_column(Text, default='', nullable=True)
+
+    schedule_date_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
     mark_per_right: Mapped[float] = mapped_column(Float, default=1.00)
     mark_per_wrong: Mapped[float] = mapped_column(Float, default=1.00)
-    question_paper_id: Mapped[int] = mapped_column(ForeignKey("pts_questionpaper.id"), nullable=False)
-    question_paper: Mapped["QuestionPaper"] = relationship("QuestionPaper", back_populates="test")
+
+    is_quiz: Mapped[bool] = mapped_column(Boolean, default=False)
+    test_image: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # Assuming storing file path
+
+    duration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=1)
+    total_question: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+
+    offline_virtual_rank: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=1.0)
+    online_virtual_rank: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=1.0)
+
+    restart_number: Mapped[Optional[int]] = mapped_column(Integer, default=3)
+    change_numerator: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    test_type: Mapped[Optional[str]] = mapped_column(String(25), default="pts")  # or use Enum if needed
+
+ 
+
+
+
+
+
 
 
 
@@ -118,7 +147,6 @@ class QuestionPaper(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     
 
-    test: Mapped[List["Test"]] = relationship("Test", back_populates="question_paper")
 
 
 
@@ -162,7 +190,5 @@ class Question(Base):
 
     attempted_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
 
-    # Relationship to UserTestAnswer (reverse ForeignKey)
-    user_test_answers: Mapped[List["UserTestAnswer"]] = relationship("UserTestAnswer", back_populates="question")
 
 
