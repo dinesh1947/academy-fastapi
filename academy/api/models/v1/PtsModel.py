@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     from .UserCourseModel import UserTestAnswer
 
+import math
 
 
 # if TYPE_CHECKING:
@@ -120,8 +121,12 @@ class Test(Base):
 
     test_type: Mapped[Optional[str]] = mapped_column(String(25), default="pts")  # or use Enum if needed
 
- 
-
+        
+    @property
+    def maximum_marks(self):
+        if self.mark_per_right is None or self.total_question is None:
+            return 0
+        return math.ceil(self.mark_per_right * self.total_question)
 
 
 

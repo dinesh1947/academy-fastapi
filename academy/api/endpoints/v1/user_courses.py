@@ -511,40 +511,151 @@ async def update_uta_is_correct_by_test(request: Request, background_tasks: Back
 
 
 
+# @router.post("/start")
+# async def start_test(
+#     request: Request,
+#     payload: StartTestSchema = Body(...),
+#     db: AsyncSession = Depends(get_async_db),
+#     current_user: dict = Depends(get_current_user),
+# ):
+#     user_id = current_user.get("id")
+#     ucp_id = payload.ucp_id
+#     test_id = payload.test_id
+#     answer_mode = payload.answer_mode
+#     test_type = payload.test_type
+#     now = datetime.utcnow()
+
+#     # Get Test
+#     test = (await db.execute(
+#         select(Test).where(Test.id == test_id).limit(1)
+#     )).scalar_one_or_none()
+#     if not test:
+#         raise HTTPException(status_code=404, detail="Test not found")
+
+#     # Get UserCoursePackage
+#     ucp = (await db.execute(
+#         select(UserCoursePackage).where(
+#             UserCoursePackage.id == ucp_id,
+#             UserCoursePackage.user_id == user_id
+#         ).limit(1)
+#     )).scalar_one_or_none()
+#     if not ucp:
+#         raise HTTPException(status_code=404, detail="UserCoursePackage not found")
+
+#     # Get TestPackage
+#     tp = (await db.execute(
+#         select(TestPackage).where(
+#             TestPackage.test_id == test_id,
+#             TestPackage.package_id == ucp.package_id
+#         ).limit(1)
+#     )).scalar_one_or_none()
+#     if not tp:
+#         raise HTTPException(status_code=404, detail="TestPackage not found")
+
+#     # Get or Create UserTest
+#     user_test = (await db.execute(
+#         select(UserTest).where(
+#             UserTest.user_id == user_id,
+#             UserTest.test_id == test_id,
+#             UserTest.test_type == test_type
+#         ).limit(1)
+#     )).scalar_one_or_none()
+
+#     created = False
+#     if not user_test:
+#         user_test = UserTest(
+#             user_id=user_id,
+#             test_id=test_id,
+#             user_course_package_id=ucp_id,
+#             question_paper_id=test.question_paper_id,
+#             answer_mode=answer_mode,
+#             test_type=test_type,
+#             test_status="start",
+#             language="english",
+#             created_at=now,
+#             updated_at=now,
+#         )
+#         db.add(user_test)
+#         await db.commit()
+#         await db.refresh(user_test)
+#         created = True
+
+#     # Calculate Remaining Time
+#     if created:
+#         remaining_time = test.duration * 60
+#     else:
+#         left_duration = int((tp.end_date_time - now).total_seconds())
+#         if left_duration <= 0:
+#             return JSONResponse(
+#                 content={"flag": 1, "message": "Time Up", "data": {}},
+#                 status_code=200,
+#             )
+#         remaining_time = min(test.duration * 60 - user_test.time_spent, left_duration)
+
+#     # Get language list
+#     stmt = (
+#         select(distinct(Question.language))
+#         .where(Question.question_paper_id == test.question_paper_id)
+#         .order_by(Question.language)
+#     )
+#     result = await db.execute(stmt)
+#     languages = [lang.value for lang in result.scalars().all() if lang is not None]
+
+#     # Prepare response data
+#     data = {
+#         "remaining_time": remaining_time,
+#         "duration": test.duration,
+#         "user_test_id": user_test.id,
+#         "name": test.name,
+#         "instruction": test.instruction,
+#         "hindi_instruction": test.hindi_instruction,
+#         "language": languages,
+#         "maximum_marks": test.maximum_marks  # Uses your @property method
+#     }
+
+#     return JSONResponse(
+#         content={"flag": 1, "message": "Updated successfully", "data": data},
+#         status_code=200,
+#     )
 
 
 
 
-@router.post("/start")
+
+
+
+
+
+
+@router.post("/start/")
 async def start_test(
-    request: Request,   
-    payload: StartTestSchema = Body(...), 
-    db: AsyncSession = Depends(get_async_db), 
+    request: Request,
+    payload: StartTestSchema = Body(...),
+    db: AsyncSession = Depends(get_async_db),
     current_user: dict = Depends(get_current_user),
 ):
-    print("####################################################################################################")
-    data ={}
-    print(current_user)
-
     user_id = current_user.get("id")
-
     ucp_id = payload.ucp_id
     test_id = payload.test_id
     answer_mode = payload.answer_mode
     test_type = payload.test_type
+    now = datetime.utcnow()
 
-    test_result = await db.execute(select(Test).where(Test.id == test_id))
+    test_stmt = select(Test).where(Test.id == test_id).limit(1)
+    ucp_stmt = select(UserCoursePackage).where(UserCoursePackage.id == ucp_id,UserCoursePackage.user_id == user_id).limit(1)
+    user_test_stmt = select(UserTest).where(UserTest.user_id == user_id,UserTest.test_id == test_id,UserTest.test_type == test_type).limit(1)
+
+    test_result = await db.execute(test_stmt)
+    ucp_result = await db.execute(ucp_stmt)
+    user_test_result = await db.execute(user_test_stmt)
+
+
     test = test_result.scalar_one_or_none()
+    ucp = ucp_result.scalar_one_or_none()
+    user_test = user_test_result.scalar_one_or_none()
+
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
-
-    ucp_result = await db.execute(
-        select(UserCoursePackage).where(
-            UserCoursePackage.id == ucp_id,
-            UserCoursePackage.user_id == user_id
-        )
-    )
-    ucp = ucp_result.scalar_one_or_none()
     if not ucp:
         raise HTTPException(status_code=404, detail="UserCoursePackage not found")
 
@@ -552,24 +663,14 @@ async def start_test(
         select(TestPackage).where(
             TestPackage.test_id == test_id,
             TestPackage.package_id == ucp.package_id
-        )
+        ).limit(1)
     )
     tp = tp_result.scalar_one_or_none()
     if not tp:
         raise HTTPException(status_code=404, detail="TestPackage not found")
 
-    usertest_result = await db.execute(
-        select(UserTest).where(
-            UserTest.user_id == user_id,
-            UserTest.test_id == test_id,
-            UserTest.test_type == test_type
-        )
-    )
-    user_test = usertest_result.scalar_one_or_none()
-
-    if user_test:
-        created = False
-    else:
+    created = False
+    if not user_test:
         user_test = UserTest(
             user_id=user_id,
             test_id=test_id,
@@ -578,80 +679,43 @@ async def start_test(
             answer_mode=answer_mode,
             test_type=test_type,
             test_status="start",
-            language="english",  
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            language="english",
+            created_at=now,
+            updated_at=now,
         )
         db.add(user_test)
         await db.commit()
         await db.refresh(user_test)
         created = True
 
-
     if created:
-        data["remaining_time"] =test.duration*60
-        pass
+        remaining_time = test.duration * 60
     else:
-        print(user_test.time_spent)
-        print(tp.end_date_time)
-        print(tp.end_date_time-datetime.utcnow())
-        left_duration = int((tp.end_date_time-datetime.utcnow()).total_seconds())
-        print(left_duration)
-
-        if left_duration <=0:
-
+        left_duration = int((tp.end_date_time - now).total_seconds())
+        if left_duration <= 0:
             return JSONResponse(
                 content={"flag": 1, "message": "Time Up", "data": {}},
                 status_code=200,
             )
+        remaining_time = min(test.duration * 60 - user_test.time_spent, left_duration)
 
-
-
-
-
-        remaining_time = test.duration*60 - user_test.time_spent
-        data["remaining_time"] = min(remaining_time,left_duration)
-
-
-    data["duration"] = test.duration
-
-
-    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
-
-
-    
-
-
-
-    stmt = (
+    lang_result = await db.execute(
         select(distinct(Question.language))
-        .where(Question.question_paper_id == test.question_paper_id)
+        .where(Question.question_paper_id == test.question_paper_id, Question.question_number==1)
         .order_by(Question.language)
     )
+    languages = [lang.value for lang in lang_result.scalars().all() if lang is not None]
 
-    result = await db.execute(stmt)
-    language_result = result.scalars().all()
-    language = [lang.value for lang in language_result if lang is not None]
-
-
-
-
-
-
-
-    data["duration"] = test.duration
-    data["user_test_id"] = user_test.id
-    data["name"] = test.name
-    data["instruction"] = test.instruction
-    data["hindi_instruction"] = test.hindi_instruction
-    data["name"] = test.name
-    data["language"] = language
-    data["maximum_marks"] = test.mark_per_right*test.total_question
-
-
+    data = {
+        "user_test_id": user_test.id,
+        "remaining_time": remaining_time,
+        "duration": test.duration,
+        "name": test.name,
+        "instruction": test.instruction,
+        "hindi_instruction": test.hindi_instruction,
+        "language": languages,
+        "maximum_marks": test.maximum_marks,
+    }
 
     return JSONResponse(
         content={"flag": 1, "message": "Updated successfully", "data": data},
