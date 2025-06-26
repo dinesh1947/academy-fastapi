@@ -4,12 +4,15 @@ from typing import Optional, List
 from datetime import datetime
 from enum import Enum as PyEnum
 
-from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, Float, func
+from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, Float, func, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
 from sqlalchemy import Enum as SqlEnum
+
+from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 
 from typing import TYPE_CHECKING, Literal
@@ -36,6 +39,15 @@ class Status(PyEnum):
     inactive = "inactive"
 
 STATUS = ("active", "inactive", "archived")
+
+
+class LanguageEnum(str, Enum):
+    english = "english"
+    hindi = "hindi"
+
+
+
+
 
 class TestSeries(Base):
     __tablename__ = 'pts_testseries'
@@ -83,8 +95,6 @@ class Test(Base):
     duration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     mark_per_right: Mapped[float] = mapped_column(Float, default=1.00)
     mark_per_wrong: Mapped[float] = mapped_column(Float, default=1.00)
-
-
     question_paper_id: Mapped[int] = mapped_column(ForeignKey("pts_questionpaper.id"), nullable=False)
     question_paper: Mapped["QuestionPaper"] = relationship("QuestionPaper", back_populates="test")
 
@@ -109,38 +119,50 @@ class QuestionPaper(Base):
     
 
     test: Mapped[List["Test"]] = relationship("Test", back_populates="question_paper")
-    questions: Mapped[List["Question"]] = relationship("Question", back_populates="question_paper")
+
 
 
 class Question(Base):
     __tablename__ = 'pts_question'
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    question_paper_id: Mapped[int] = mapped_column(Integer, ForeignKey("pts_questionpaper.id"), nullable=False)
     question_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     question: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     option_a: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     option_b: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     option_c: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     option_d: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
-    correct_answer: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    incorrect_answer: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    not_answer: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-
-    correct_option: Mapped[Optional[str]] = mapped_column(String(25), nullable=True)
+    correct_option: Mapped[Optional[str]] = mapped_column(String(25), nullable=True, default="")
     explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    answer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    question_paper_id: Mapped[int] = mapped_column(ForeignKey("pts_questionpaper.id"), nullable=False)
-    question_paper: Mapped["QuestionPaper"] = relationship("QuestionPaper", back_populates="questions")
 
-    # Use string refs to avoid import loop
+    language: Mapped[Optional[LanguageEnum]] = mapped_column(SQLAlchemyEnum(LanguageEnum, name="language_enum"), nullable=True )
+
+    correct_answer: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+    incorrect_answer: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+    not_answer: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+
+    source: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    subject: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+    subject_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+    topic: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+    topic_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+    sub_topic: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+    sub_topic_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+
+    difficulty_level: Mapped[Optional[str]] = mapped_column(String(25), nullable=True)
+    statement: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    direction: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="")
+    is_negative: Mapped[Optional[bool]] = mapped_column(Boolean, default=True)
+
+    attempted_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=0)
+
+    # Relationship to UserTestAnswer (reverse ForeignKey)
     user_test_answers: Mapped[List["UserTestAnswer"]] = relationship("UserTestAnswer", back_populates="question")
-
-
-
-
-
-
 
 

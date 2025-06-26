@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Sequence, Tuple
 import asyncio
-from sqlalchemy.future import select
 from config.database import get_sync_db, get_async_db
 from utils.project_jwt import *
 from utils.pagination import *
@@ -31,6 +30,7 @@ from fastapi import Body
 router = APIRouter()
 
 
+from sqlalchemy import select, distinct
 
 
 
@@ -577,7 +577,7 @@ async def start_test(
             answer_mode=answer_mode,
             test_type=test_type,
             test_status="start",
-            language="en",  
+            language="english",  
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
@@ -589,8 +589,27 @@ async def start_test(
 
     data = {"created":created}
 
+    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+    print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
 
 
+    
+
+
+
+    stmt = (
+        select(distinct(Question.language))
+        .where(Question.question_paper_id == test.question_paper_id)
+        .order_by(Question.language)
+    )
+
+    result = await db.execute(stmt)
+    languages = result.scalars().all()
+    language_values = [lang.value for lang in languages if lang is not None]
+
+    print(language_values)
 
 
     return JSONResponse(
