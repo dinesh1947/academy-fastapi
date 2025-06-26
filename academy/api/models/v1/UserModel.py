@@ -18,6 +18,7 @@ class Role(PyEnum):
     student = "student"
     teacher = "teacher"
     admin = "admin"
+    instructor = "instructor"
 
 
 class Status(PyEnum):

@@ -254,7 +254,7 @@ async def admin_read_tests(
         
         ucp_data = result.fetchone()
         if not ucp_data:
-            return JSONResponse( status_code=200, content={"flag": 0, "message": "No record Found", "data": {}})
+            return JSONResponse(status_code=200, content={"flag": 0, "message": "No record Found", "data": {}})
             
         
         package_name = ucp_data.package_name
@@ -277,7 +277,7 @@ async def admin_read_tests(
                 UT.test_type,
                 UT.answer_mode
             FROM user_courses_usercoursepackage AS UCP
-            INNER JOIN pts_testpackage AS TP ON TP.package_id = UCP.package_id
+            INNER JOIN pts_testpackage AS TP ON TP.package_id = UCP.package_id  
             INNER JOIN pts_test AS T ON T.id = TP.test_id
             LEFT JOIN user_courses_usertest AS UT 
                 ON UT.test_id = T.id 
@@ -288,6 +288,7 @@ async def admin_read_tests(
                 AND T.is_quiz = FALSE
                 AND TP.start_date_time IS NOT NULL
                 AND TP.end_date_time IS NOT NULL
+                AND (UT.id IS NOT NULL OR TP.end_date_time > NOW())
                
                 AND (UT.test_status != 'completed' OR UT.test_status IS NULL)
             ORDER BY TP.start_date_time DESC
@@ -343,7 +344,6 @@ async def admin_read_tests(
                 if isinstance(value, datetime):
                     item[key] = value.isoformat()
 
-        # Return JSON response
         return JSONResponse(
             status_code=200,
             content={
@@ -362,16 +362,8 @@ async def admin_read_tests(
         )
 
 
-
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={
-                "flag": 0,
-                "message": f"Something went wrong - {str(e)}",
-                "data": {}
-            }
-        )
+        return JSONResponse( status_code=500, content={"flag": 0, "message": f"Something went wrong - {str(e)}",  "data": {} })
 
 
 
