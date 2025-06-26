@@ -6,6 +6,13 @@ from fastapi.exceptions import HTTPException
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
+
+
+from fastapi.exceptions import RequestValidationError
+import traceback
+
+
+
 import jwt
 from jose import JWTError, ExpiredSignatureError  # PyJWT compatibility
 
@@ -61,3 +68,14 @@ async def custom_404_handler(request: Request, exc: StarletteHTTPException):
 
 
 
+
+
+
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    # print("Validation Error:", exc)
+    # traceback.print_exc()
+
+    return JSONResponse(
+        status_code=400,
+        content={"message": "Invalid or missing request body.", "flag": 0}
+    )

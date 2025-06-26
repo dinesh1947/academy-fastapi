@@ -9,6 +9,7 @@ from config.database import get_sync_db, get_async_db
 from utils.project_jwt import *
 from utils.pagination import *
 from utils.common import *
+from api.models.v1.PtsModel import *
 from api.models.v1.UserCourseModel import *
 from api.schemas.v1.UserCourseSchema import *
 from sqlalchemy.orm import joinedload
@@ -24,6 +25,7 @@ from sqlalchemy import bindparam
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from fastapi import Body
 
 
 router = APIRouter()
@@ -513,16 +515,88 @@ async def update_uta_is_correct_by_test(request: Request, background_tasks: Back
 
 
 
+@router.post("/start")
+async def start_test(
+    request: Request,   
+    payload: StartTestSchema = Body(...), 
+    db: AsyncSession = Depends(get_async_db), 
+    current_user: dict = Depends(get_current_user),
+):
+    print("####################################################################################################")
+    print(current_user)
+
+    user_id = current_user.get("id")
+
+    ucp_id = payload.ucp_id
+    test_id = payload.test_id
+    answer_mode = payload.answer_mode
+    test_type = payload.test_type
+
+    test_result = await db.execute(select(Test).where(Test.id == test_id))
+    test = test_result.scalar_one_or_none()
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+
+    ucp_result = await db.execute(
+        select(UserCoursePackage).where(
+            UserCoursePackage.id == ucp_id,
+            UserCoursePackage.user_id == user_id
+        )
+    )
+    ucp = ucp_result.scalar_one_or_none()
+    if not ucp:
+        raise HTTPException(status_code=404, detail="UserCoursePackage not found")
+
+    tp_result = await db.execute(
+        select(TestPackage).where(
+            TestPackage.test_id == test_id,
+            TestPackage.package_id == ucp.package_id
+        )
+    )
+    tp = tp_result.scalar_one_or_none()
+    if not tp:
+        raise HTTPException(status_code=404, detail="TestPackage not found")
+
+    usertest_result = await db.execute(
+        select(UserTest).where(
+            UserTest.user_id == user_id,
+            UserTest.test_id == test_id,
+            UserTest.test_type == test_type
+        )
+    )
+    user_test = usertest_result.scalar_one_or_none()
+
+    if user_test:
+        created = False
+    else:
+        user_test = UserTest(
+            user_id=user_id,
+            test_id=test_id,
+            user_course_package_id=ucp_id,
+            question_paper_id=test.question_paper_id,
+            answer_mode=answer_mode,
+            test_type=test_type,
+            test_status="start",
+            language="en",  
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        db.add(user_test)
+        await db.commit()
+        await db.refresh(user_test)
+        created = True
+
+
+    data = {"created":created}
 
 
 
 
 
-
-
-
-
-
+    return JSONResponse(
+        content={"flag": 1, "message": "Updated successfully", "data": data},
+        status_code=200,
+    )
 
 
 

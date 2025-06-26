@@ -54,3 +54,12 @@ class UserTestAnswerSchema(BaseModel):
     question: Optional[QuestionSchema]
     model_config = {"from_attributes": True}
 
+
+
+
+
+class StartTestSchema(BaseModel):
+    ucp_id: Optional[int] = None
+    test_id: int = Field(..., description="ID of the test to start")
+    answer_mode: Optional[str] = "web"
+    test_type: Optional[str] = "pts"
