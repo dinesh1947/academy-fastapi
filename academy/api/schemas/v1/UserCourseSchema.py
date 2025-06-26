@@ -63,3 +63,13 @@ class StartTestSchema(BaseModel):
     test_id: int = Field(..., description="ID of the test to start")
     answer_mode: Optional[str] = "web"
     test_type: Optional[str] = "pts"
+
+
+class AgreeTestSchema(BaseModel):
+    user_test_id: Optional[int] = None  
+    is_agree: bool = False              
+    language: Optional[str] = "english" 
+
+
+
+

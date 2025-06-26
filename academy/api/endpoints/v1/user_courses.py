@@ -730,6 +730,131 @@ async def start_test(
 
 
 
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+
+@router.post("/agree/")
+async def agree_to_test(
+    request: Request,
+    payload: AgreeTestSchema = Body(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user),
+):
+    user_id = current_user.get("id")
+    is_agree = payload.is_agree
+    language = payload.language
+    user_test_id = payload.user_test_id
+    now = datetime.utcnow()
+
+    if not (user_test_id and language is not None and is_agree is not None):
+        return JSONResponse({"flag": 0, "message": "Missing data", "data": {}}, status_code=200)
+
+    # Step 1: Fetch user_test with test_id in one query
+    user_test_stmt = select(
+        UserTest.id,
+        UserTest.test_id
+    ).where(
+        UserTest.user_id == user_id,
+        UserTest.id == user_test_id
+    ).limit(1)
+
+    user_test_result = await db.execute(user_test_stmt)
+    user_test_row = user_test_result.first()
+    if not user_test_row:
+        raise HTTPException(status_code=404, detail="UserTest not found")
+
+    test_id = user_test_row.test_id
+
+    # Step 2: Fetch test once
+    test_stmt = select(Test.question_paper_id).where(Test.id == test_id).limit(1)
+    test_result = await db.execute(test_stmt)
+    test_row = test_result.first()
+    if not test_row:
+        raise HTTPException(status_code=404, detail="Test not found")
+    question_paper_id = test_row.question_paper_id
+
+    # Step 3: Update user_test with `update` query (no ORM tracking needed)
+    await db.execute(
+        UserTest.__table__.update()
+        .where(UserTest.id == user_test_id)
+        .values(
+            is_agree=is_agree,
+            language=language,
+            test_status='continue',
+            updated_at=now
+        )
+    )
+
+    # Step 4: Fetch relevant questions (only id & question_number)
+    question_stmt = select(
+        Question.id,
+        Question.question_number
+    ).where(
+        Question.question_paper_id == question_paper_id,
+        Question.language == language
+    ).order_by(Question.question_number)
+
+    question_result = await db.execute(question_stmt)
+    questions = question_result.all()
+
+    if not questions:
+        return JSONResponse({"flag": 1, "message": "No questions to create", "data": {}}, status_code=200)
+
+    # Step 5: Fetch already answered question_numbers
+    existing_stmt = select(UserTestAnswer.question_number).where(
+        UserTestAnswer.user_test_id == user_test_id
+    )
+    existing_result = await db.execute(existing_stmt)
+    existing_q_numbers = set(existing_result.scalars().all())
+
+    # Step 6: Prepare and insert only missing answers
+    new_entries = [
+        {
+            "question_number": q.question_number,
+            "user_test_id": user_test_id,
+            "question_id": q.id,
+            "respond_at": None,
+            "answer": '',
+            "is_correct": 0,
+            "score_status": 0,
+            "mark_for_review": False
+        }
+        for q in questions if q.question_number not in existing_q_numbers
+    ]
+
+    if new_entries:
+        await db.execute(UserTestAnswer.__table__.insert(), new_entries)
+
+    await db.commit()
+
+    return JSONResponse({
+        "flag": 1,
+        "message": "Agreement updated successfully",
+        "data": {}
+    }, status_code=200)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
