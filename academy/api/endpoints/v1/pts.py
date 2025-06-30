@@ -73,6 +73,9 @@ router = APIRouter()
 
 
 
+
+
+
 def upload_file_to_s3(file: UploadFile, folder: str) -> str:
     ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid4().hex}{ext}"
