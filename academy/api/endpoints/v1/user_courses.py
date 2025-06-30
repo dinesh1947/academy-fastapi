@@ -391,7 +391,7 @@ async def admin_read_tests(
 
 
 
-@router.get("/user-test-list", response_model=PaginatedResponse[UserTestSchema])
+@router.get("/user-test-list/", response_model=PaginatedResponse[UserTestSchema])
 def get_test_users(
     request: Request,
     db: Session = Depends(get_sync_db),
@@ -412,7 +412,7 @@ def get_test_users(
 
 
 
-@router.get("/user-test-answer-list", response_model=PaginatedResponse[UserTestAnswerSchema])
+@router.get("/user-test-answer-list/", response_model=PaginatedResponse[UserTestAnswerSchema])
 def get_test_user_answer(
     request: Request,
     db: Session = Depends(get_sync_db),
@@ -847,6 +847,44 @@ async def agree_to_test(
 
 
 
+
+
+
+@router.get("/user-test/{pk}/", response_model=PaginatedResponse[UserTestAnswerSchema])
+async def get_test_user_answer(
+    pk: int,
+    request: Request,
+    db: Session = Depends(get_async_db),
+    current_user: dict = Depends(get_current_user),
+
+):
+
+    print(pk)
+    user_id = current_user.get("id")
+
+    user_test_stmt = select(
+        UserTest.id,
+        UserTest.test_id
+    ).where(
+        UserTest.user_id == user_id,
+        UserTest.id == pk
+    ).limit(1)
+
+    user_test_result = await db.execute(user_test_stmt)
+    user_test_row = user_test_result.first()
+    if not user_test_row:
+        raise HTTPException(status_code=404, detail="UserTest not found")
+
+    test_id = user_test_row.test_id
+
+
+    print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
+    print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
+    print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
+    print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
+    print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
+    print("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLUUUUUUUUUUUUUUUUUUUUUUUUUUUUU")
+   
 
 
 
