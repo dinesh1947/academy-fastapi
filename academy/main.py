@@ -42,6 +42,14 @@ app.add_exception_handler(RequestValidationError, request_validation_exception_h
 
 
 
+
+
+
+
+
+
+
+
 # @app.get("/check-connections")
 # async def check_connections(sync_db: Session = Depends(get_sync_db)):
 #     """

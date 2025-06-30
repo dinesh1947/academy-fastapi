@@ -1,0 +1,7 @@
+# pack-refs with: peeled fully-peeled sorted 
+bcc8b21f93756e56d18cbf0b01d13fb1bb51f7ad refs/heads/dec4dc
+bcc8b21f93756e56d18cbf0b01d13fb1bb51f7ad refs/heads/dev
+52562be8fd3b91ae7aa6de61fd2bcb35736f8967 refs/remotes/origin/HEAD
+695ca6cc20618e53d0ef869534085ec757e66bba refs/remotes/origin/avinash
+52562be8fd3b91ae7aa6de61fd2bcb35736f8967 refs/remotes/origin/dev
+1d50f6a0e979b8f2d42d173daa6fb86a4a1e4ec6 refs/stash

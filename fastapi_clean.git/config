@@ -1,0 +1,8 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "origin"]
+	url = git@github.com-dinesh1947:dinesh1947/academy-fastapi.git
+	fetch = +refs/*:refs/*
+	mirror = true
